@@ -21,23 +21,26 @@ interface UserSettingsModalProps {
 const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, onClose }) => {
     const { user, updateUserProfile } = useAuth();
     const [formData, setFormData] = useState({
-        displayName: user?.displayName || '',
-        username: user?.username || '',
-        profilePhoto: user?.photoURL || ''
+        displayName: '',
+        username: '',
+        profilePhoto: ''
     });
     const [errors, setErrors] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
 
     React.useEffect(() => {
-        if (user) {
+        if (user && isOpen) {
             setFormData({
                 displayName: user.displayName || '',
                 username: user.username || '',
                 profilePhoto: user.photoURL || ''
             });
+            // Reset states when modal opens
+            setErrors([]);
+            setSuccess(false);
         }
-    }, [user]);
+    }, [user, isOpen]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;

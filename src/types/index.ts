@@ -13,7 +13,6 @@ export interface Blog {
   content: string;
   authorId: string;
   authorUsername: string;
-  authorPhotoURL?: string;
   createdAt: Date;
   updatedAt: Date;
   likes: string[]; // Array of user IDs who liked
@@ -26,7 +25,6 @@ export interface Comment {
   blogId: string;
   authorId: string;
   authorUsername: string;
-  authorPhotoURL?: string;
   content: string;
   createdAt: Date;
   likes: string[]; // Array of user IDs who liked the comment

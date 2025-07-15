@@ -10,6 +10,7 @@ import {
   where, 
   orderBy, 
   limit,
+  startAfter,
   arrayUnion,
   arrayRemove,
   serverTimestamp,
@@ -38,6 +39,45 @@ const processBlogData = (doc: QueryDocumentSnapshot<DocumentData>): Blog => {
   } as Blog;
 };
 
+// Helper function to get user data by ID
+export const getUserById = async (userId: string): Promise<User | null> => {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      return {
+        uid: userDoc.id,
+        ...userData,
+        createdAt: userData.createdAt?.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt)
+      } as User;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting user by ID:', error);
+    return null;
+  }
+};
+
+// Helper function to get multiple users efficiently
+export const getUsersByIds = async (userIds: string[]): Promise<Record<string, User>> => {
+  try {
+    const userPromises = userIds.map(userId => getUserById(userId));
+    const users = await Promise.all(userPromises);
+    
+    const userMap: Record<string, User> = {};
+    users.forEach((user, index) => {
+      if (user) {
+        userMap[userIds[index]] = user;
+      }
+    });
+    
+    return userMap;
+  } catch (error) {
+    console.error('Error getting users by IDs:', error);
+    return {};
+  }
+};
+
 // Blog functions
 export const createBlog = async (userId: string, blogData: CreateBlogData): Promise<string> => {
   try {
@@ -53,7 +93,6 @@ export const createBlog = async (userId: string, blogData: CreateBlogData): Prom
       ...blogData,
       authorId: userId,
       authorUsername: userData.username, // This will be lowercase
-      authorPhotoURL: userData.photoURL || null,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       likes: [],
@@ -82,16 +121,28 @@ export const getBlog = async (blogId: string): Promise<Blog | null> => {
   }
 };
 
-export const getBlogs = async (limitCount: number = 10): Promise<Blog[]> => {
+export const getBlogs = async (limitCount: number = 10, lastDoc?: QueryDocumentSnapshot<DocumentData>): Promise<{ blogs: Blog[], lastVisible: QueryDocumentSnapshot<DocumentData> | null }> => {
   try {
-    const q = query(
+    let q = query(
       collection(db, 'blogs'),
       orderBy('createdAt', 'desc'),
       limit(limitCount)
     );
+
+    if (lastDoc) {
+      q = query(
+        collection(db, 'blogs'),
+        orderBy('createdAt', 'desc'),
+        startAfter(lastDoc),
+        limit(limitCount)
+      );
+    }
     
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => processBlogData(doc));
+    const blogs = querySnapshot.docs.map(doc => processBlogData(doc));
+    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
+    
+    return { blogs, lastVisible };
   } catch (error) {
     console.error('Error getting blogs:', error);
     throw error;
@@ -284,7 +335,6 @@ export const addComment = async (blogId: string, userId: string, commentData: Cr
       blogId,
       authorId: userId,
       authorUsername: userData.username,
-      authorPhotoURL: userData.photoURL,
       content: commentData.content,
       createdAt: Timestamp.now(), // Use Timestamp.now() instead of serverTimestamp()
       likes: []

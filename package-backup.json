@@ -9,12 +9,7 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
-    "clean": "rm -rf .next out",
-    "seo:audit": "lighthouse --output=json --output=html --output-path=./reports/lighthouse --chrome-flags='--headless' http://localhost:3000",
-    "seo:sitemap": "next build && node scripts/generate-sitemap.js",
-    "seo:analyze": "node scripts/seo-analyzer.js",
-    "seo:keywords": "node scripts/keyword-analyzer.js",
-    "performance:test": "node scripts/performance-test.js"
+    "clean": "rm -rf .next out"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -44,7 +39,6 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
-    "lighthouse": "^12.0.0",
     "tailwindcss": "^4.1.11",
     "typescript": "^5"
   }

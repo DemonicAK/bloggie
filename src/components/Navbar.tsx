@@ -44,7 +44,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3 group">
+          <Link href={user ? "/home" : "/landing"} className="flex items-center space-x-3 group">
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur-sm opacity-30 group-hover:opacity-50 transition-opacity"></div>
               <BookOpen className="relative h-8 w-8 text-blue-600 group-hover:text-purple-600 transition-colors" />
@@ -57,7 +57,7 @@ const Navbar = () => {
           {/* Navigation Links */}
           <div className="hidden md:flex items-center space-x-8">
             <Link
-              href="/"
+              href={user ? "/home" : "/landing"}
               className="flex items-center space-x-2 text-slate-600 hover:text-blue-600 transition-all duration-300 group"
             >
               <Home className="h-4 w-4 group-hover:scale-110 transition-transform" />

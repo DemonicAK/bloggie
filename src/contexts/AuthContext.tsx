@@ -6,6 +6,8 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut,
   updateProfile
 } from 'firebase/auth';
@@ -19,6 +21,7 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   register: (email: string, password: string, username: string, displayName: string, profilePhoto?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
@@ -48,7 +51,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
         if (userDoc.exists()) {
           const userData = userDoc.data() as User;
-          setUser(userData);
+          // Ensure photoURL is available - fallback to Firebase Auth photoURL if not in Firestore
+          const userWithPhoto = {
+            ...userData,
+            photoURL: userData.photoURL || firebaseUser.photoURL || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face&auto=format&q=80",
+            createdAt: userData.createdAt instanceof Date ? userData.createdAt : new Date(userData.createdAt)
+          };
+          setUser(userWithPhoto);
         } else {
           // If user doesn't exist in Firestore, create a basic user object
           const basicUser: User = {
@@ -120,6 +129,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithGoogle = async () => {
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const { user: firebaseUser } = await signInWithPopup(auth, provider);
+
+      // Check if user document exists in Firestore
+      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+
+      if (!userDoc.exists()) {
+        // New user, create user document
+        // Generate a username from email or displayName
+        const emailPrefix = firebaseUser.email?.split('@')[0] || '';
+        const baseUsername = firebaseUser.displayName?.toLowerCase().replace(/\s+/g, '') || emailPrefix;
+
+        // Ensure username is unique
+        let username = baseUsername;
+        let counter = 1;
+        while (await checkUsernameExists(username)) {
+          username = `${baseUsername}${counter}`;
+          counter++;
+        }
+
+        const userData: User = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          username: username,
+          displayName: firebaseUser.displayName || username,
+          photoURL: firebaseUser.photoURL || undefined,
+          createdAt: new Date(),
+        };
+
+        await setDoc(doc(db, 'users', firebaseUser.uid), userData);
+        setUser(userData);
+      } else {
+        // Existing user, load user data
+        const userData = userDoc.data() as User;
+        setUser({
+          ...userData,
+          createdAt: userData.createdAt instanceof Date ? userData.createdAt : new Date(userData.createdAt)
+        });
+      }
+    } catch (error) {
+      setLoading(false);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     await signOut(auth);
   };
@@ -158,6 +215,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     firebaseUser,
     loading,
     login,
+    loginWithGoogle,
     register,
     logout,
     updateUserProfile,

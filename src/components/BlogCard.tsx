@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
-import { Blog } from '@/types';
+import { Blog, User } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Heart, Bookmark, MessageCircle, User, Calendar, ArrowRight } from 'lucide-react';
-import { toggleLike, toggleBookmark } from '@/lib/blogService';
+import { Heart, Bookmark, MessageCircle, User as UserIcon, Calendar, ArrowRight } from 'lucide-react';
+import { toggleLike, toggleBookmark, getUserById } from '@/lib/blogService';
 import { formatDistance } from 'date-fns';
 
 interface BlogCardProps {
@@ -19,6 +19,21 @@ const BlogCard: React.FC<BlogCardProps> = ({ blog, onUpdate }) => {
   const { user } = useAuth();
   const [isLiking, setIsLiking] = useState(false);
   const [isBookmarking, setIsBookmarking] = useState(false);
+  const [authorData, setAuthorData] = useState<User | null>(null);
+
+  // Fetch author data
+  useEffect(() => {
+    const fetchAuthorData = async () => {
+      try {
+        const author = await getUserById(blog.authorId);
+        setAuthorData(author);
+      } catch (error) {
+        console.error('Error fetching author data:', error);
+      }
+    };
+
+    fetchAuthorData();
+  }, [blog.authorId]);
 
   const isLiked = user ? blog.likes.includes(user.uid) : false;
   const isBookmarked = user ? blog.bookmarks.includes(user.uid) : false;
@@ -66,9 +81,9 @@ const BlogCard: React.FC<BlogCardProps> = ({ blog, onUpdate }) => {
           href={`/user/${blog.authorUsername}`}
           className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
         >
-          {blog.authorPhotoURL ? (
+          {authorData?.photoURL ? (
             <Image
-              src={blog.authorPhotoURL}
+              src={authorData.photoURL}
               alt={blog.authorUsername}
               width={40}
               height={40}
@@ -76,7 +91,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ blog, onUpdate }) => {
             />
           ) : (
             <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-              <User className="h-5 w-5 text-white" />
+              <UserIcon className="h-5 w-5 text-white" />
             </div>
           )}
           <div>
