@@ -5,9 +5,9 @@ import { usePathname } from 'next/navigation';
 
 // Extend Window interface for gtag
 declare global {
-  interface Window {
-    gtag?: (...args: unknown[]) => void;
-  }
+    interface Window {
+        gtag?: (...args: unknown[]) => void;
+    }
 }
 
 interface SEOEnhancerProps {

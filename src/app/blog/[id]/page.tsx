@@ -5,16 +5,16 @@ import { Blog, User } from '@/types';
 import BlogDetailClient from './BlogDetailClient';
 
 interface BlogPageProps {
-  params: Promise<{
-    id: string;
-  }>;
+    params: Promise<{
+        id: string;
+    }>;
 }
 
 // Generate dynamic metadata for SEO
 export async function generateMetadata({ params }: BlogPageProps): Promise<Metadata> {
-  try {
-    const { id } = await params;
-    const blog = await getBlog(id);
+    try {
+        const { id } = await params;
+        const blog = await getBlog(id);
         if (!blog) {
             return {
                 title: 'Blog Not Found | Bloggie - Technical Blog Platform',
@@ -38,33 +38,33 @@ export async function generateMetadata({ params }: BlogPageProps): Promise<Metad
 }
 
 export default async function BlogPage({ params }: BlogPageProps) {
-  const { id } = await params;
-  let blog: Blog | null = null;
-  let author: User | null = null;
-  let jsonLd = null;
+    const { id } = await params;
+    let blog: Blog | null = null;
+    let author: User | null = null;
+    let jsonLd = null;
 
-  try {
-    blog = await getBlog(id);
-    if (blog) {
-      author = await getUserById(blog.authorId);
-      jsonLd = generateBlogJsonLd(blog, author || undefined);
+    try {
+        blog = await getBlog(id);
+        if (blog) {
+            author = await getUserById(blog.authorId);
+            jsonLd = generateBlogJsonLd(blog, author || undefined);
+        }
+    } catch (error) {
+        console.error('Error fetching blog data:', error);
     }
-  } catch (error) {
-    console.error('Error fetching blog data:', error);
-  }
 
-  return (
-    <>
-      {/* Structured Data for SEO */}
-      {jsonLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      )}
-      
-      {/* Client Component for Interactive Features */}
-      <BlogDetailClient blogId={id} initialBlog={blog} initialAuthor={author} />
-    </>
-  );
+    return (
+        <>
+            {/* Structured Data for SEO */}
+            {jsonLd && (
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                />
+            )}
+
+            {/* Client Component for Interactive Features */}
+            <BlogDetailClient blogId={id} initialBlog={blog} initialAuthor={author} />
+        </>
+    );
 }

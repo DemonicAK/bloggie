@@ -89,22 +89,20 @@ export default function HomePageClient() {
                         <div className="flex space-x-1">
                             <button
                                 onClick={() => setActiveTab('latest')}
-                                className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-                                    activeTab === 'latest'
+                                className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === 'latest'
                                         ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105'
                                         : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-                                }`}
+                                    }`}
                             >
                                 <Clock className="h-4 w-4 mr-2" />
                                 Latest Stories
                             </button>
                             <button
                                 onClick={() => setActiveTab('popular')}
-                                className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-                                    activeTab === 'popular'
+                                className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === 'popular'
                                         ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105'
                                         : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-                                }`}
+                                    }`}
                             >
                                 <TrendingUp className="h-4 w-4 mr-2" />
                                 Popular Today
@@ -131,8 +129,8 @@ export default function HomePageClient() {
                             <div className="grid gap-6 mb-8">
                                 {displayedBlogs.map((blog, index) => (
                                     <FloatingCard key={blog.id} delay={index * 0.1}>
-                                        <BlogCard 
-                                            blog={blog} 
+                                        <BlogCard
+                                            blog={blog}
                                             onUpdate={fetchInitialBlogs}
                                         />
                                     </FloatingCard>

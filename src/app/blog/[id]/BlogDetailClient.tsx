@@ -230,8 +230,8 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
                                 variant="ghost"
                                 size="sm"
                                 className={`flex items-center gap-2 ${isLiked
-                                        ? 'text-red-600 bg-red-50 hover:bg-red-100'
-                                        : 'text-gray-600 hover:bg-gray-100'
+                                    ? 'text-red-600 bg-red-50 hover:bg-red-100'
+                                    : 'text-gray-600 hover:bg-gray-100'
                                     }`}
                             >
                                 <Heart
@@ -246,8 +246,8 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
                                 variant="ghost"
                                 size="sm"
                                 className={`flex items-center gap-2 ${isBookmarked
-                                        ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
-                                        : 'text-gray-600 hover:bg-gray-100'
+                                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                                    : 'text-gray-600 hover:bg-gray-100'
                                     }`}
                             >
                                 <Bookmark
