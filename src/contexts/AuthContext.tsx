@@ -12,14 +12,16 @@ import {
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { User } from '@/types';
+import { checkUsernameExists } from '@/lib/blogService';
 
 interface AuthContextType {
   user: User | null;
   firebaseUser: FirebaseUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, username: string, displayName: string) => Promise<void>;
+  register: (email: string, password: string, username: string, displayName: string, profilePhoto?: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUserProfile: (updates: Partial<User>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -79,23 +81,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (email: string, password: string, username: string, displayName: string) => {
+  const register = async (email: string, password: string, username: string, displayName: string, profilePhoto?: string) => {
     setLoading(true);
     try {
+      // Normalize username to lowercase and trim whitespace
+      // const normalizedUsername = username.toLowerCase().trim();
+      const normalizedUsername = username.trim();
+
+      // Check if username already exists
+      const usernameExists = await checkUsernameExists(normalizedUsername);
+      if (usernameExists) {
+        throw new Error('Username is already taken. Please choose a different username.');
+      }
+
       const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password);
 
       // Update profile
       await updateProfile(firebaseUser, {
         displayName: displayName,
+        photoURL: profilePhoto,
       });
 
-      // Create user document in Firestore
+      // Create user document in Firestore with both original and normalized username
       const userData: User = {
         uid: firebaseUser.uid,
         email,
-        username,
+        username: username, // Keep original format
         displayName,
-        photoURL: firebaseUser.photoURL || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face&auto=format&q=80",
+        photoURL: profilePhoto || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face&auto=format&q=80",
         createdAt: new Date(),
       };
 
@@ -111,6 +124,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await signOut(auth);
   };
 
+  const updateUserProfile = async (updates: Partial<User>) => {
+    if (!user || !firebaseUser) {
+      throw new Error('No user logged in');
+    }
+
+    setLoading(true);
+    try {
+      // Update Firebase Auth profile if photoURL or displayName is being updated
+      if (updates.photoURL !== undefined || updates.displayName !== undefined) {
+        await updateProfile(firebaseUser, {
+          displayName: updates.displayName || firebaseUser.displayName,
+          photoURL: updates.photoURL || firebaseUser.photoURL,
+        });
+      }
+
+      // Update Firestore document
+      const updatedUserData = { ...user, ...updates };
+      await setDoc(doc(db, 'users', user.uid), updatedUserData);
+
+      // Update local state
+      setUser(updatedUserData);
+    } catch (error) {
+      setLoading(false);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     firebaseUser,
@@ -118,6 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     register,
     logout,
+    updateUserProfile,
   };
 
   return (

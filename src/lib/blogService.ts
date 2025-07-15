@@ -15,7 +15,9 @@ import {
   serverTimestamp,
   Timestamp,
   DocumentData,
-  QueryDocumentSnapshot
+  QueryDocumentSnapshot,
+  runTransaction,
+  Transaction
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Blog, CreateBlogData, CreateCommentData, User } from '@/types';
@@ -50,7 +52,7 @@ export const createBlog = async (userId: string, blogData: CreateBlogData): Prom
     const blogToCreate = {
       ...blogData,
       authorId: userId,
-      authorUsername: userData.username,
+      authorUsername: userData.username, // This will be lowercase
       authorPhotoURL: userData.photoURL || null,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -133,16 +135,55 @@ export const getUserBlogs = async (userId: string): Promise<Blog[]> => {
   }
 };
 
+export const getUserByUsername = async (username: string): Promise<User | null> => {
+  try {
+    const normalizedUsername = username.trim();
+    
+    const q = query(
+      collection(db, 'users'),
+      where('username', '==', normalizedUsername),
+      limit(1)
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return null;
+    }
+    
+    const doc = querySnapshot.docs[0];
+    const userData = doc.data();
+    
+    return {
+      uid: doc.id,
+      ...userData,
+      // Convert Firestore Timestamp to Date
+      createdAt: userData.createdAt?.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt)
+    } as User;
+  } catch (error) {
+    console.error('Error getting user by username:', error);
+    throw error;
+  }
+};
+
 export const getBlogsByUsername = async (username: string): Promise<Blog[]> => {
   try {
+    const normalizedUsername = username.toLowerCase().trim();
+    
     const q = query(
       collection(db, 'blogs'),
-      where('authorUsername', '==', username),
+      where('authorUsername', '==', normalizedUsername),
       orderBy('createdAt', 'desc')
     );
     
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => processBlogData(doc));
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate() || new Date(),
+      updatedAt: doc.data().updatedAt?.toDate() || new Date(),
+    } as Blog));
   } catch (error) {
     console.error('Error getting blogs by username:', error);
     throw error;
@@ -260,27 +301,81 @@ export const addComment = async (blogId: string, userId: string, commentData: Cr
 };
 
 // User functions
-export const getUserByUsername = async (username: string): Promise<User | null> => {
-  try {
-    const q = query(
-      collection(db, 'users'),
-      where('username', '==', username),
-      limit(1)
-    );
-    
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) {
-      return null;
+export const validateUsername = (username: string): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+  const normalizedUsername = username.toLowerCase().trim();
+
+  if (!normalizedUsername) {
+    errors.push('Username is required');
+  } else {
+    if (normalizedUsername.length < 3) {
+      errors.push('Username must be at least 3 characters');
     }
+    if (normalizedUsername.length > 20) {
+      errors.push('Username must be less than 20 characters');
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(normalizedUsername)) {
+      errors.push('Username can only contain letters, numbers, and underscores');
+    }
+    if (/^[0-9]/.test(normalizedUsername)) {
+      errors.push('Username cannot start with a number');
+    }
+    if (normalizedUsername.includes('__')) {
+      errors.push('Username cannot contain consecutive underscores');
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+export const checkUsernameExists = async (username: string): Promise<boolean> => {
+  try {
+    // Normalize username to lowercase for consistent checking
+    const normalizedUsername = username.toLowerCase().trim();
     
-    const doc = querySnapshot.docs[0];
-    const data = doc.data();
-    return {
-      ...data,
-      createdAt: data.createdAt?.toDate() || new Date(),
-    } as User;
+    // Check both users collection and username tracking collection
+    const [usersQuery, usernameDoc] = await Promise.all([
+      getDocs(query(
+        collection(db, 'users'),
+        where('username', '==', normalizedUsername),
+        limit(1)
+      )),
+      getDoc(doc(db, 'usernames', normalizedUsername))
+    ]);
+    
+    return !usersQuery.empty || usernameDoc.exists();
   } catch (error) {
-    console.error('Error getting user by username:', error);
+    console.error('Error checking username existence:', error);
+    throw error;
+  }
+};
+
+export const reserveUsername = async (username: string, uid: string): Promise<void> => {
+  try {
+    const normalizedUsername = username.toLowerCase().trim();
+    
+    // Use a transaction to atomically check and reserve the username
+    await runTransaction(db, async (transaction: Transaction) => {
+      // Check if username is already taken
+      const usernameRef = doc(db, 'usernames', normalizedUsername);
+      const usernameDoc = await transaction.get(usernameRef);
+      
+      if (usernameDoc.exists()) {
+        throw new Error('Username is already taken. Please choose a different username.');
+      }
+      
+      // Reserve the username
+      transaction.set(usernameRef, {
+        uid: uid,
+        reservedAt: new Date(),
+        username: normalizedUsername
+      });
+    });
+  } catch (error) {
+    console.error('Error reserving username:', error);
     throw error;
   }
 };

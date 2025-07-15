@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import ImageUpload from '@/components/ui/ImageUpload';
+import { checkUsernameExists } from '@/lib/blogService';
 import {
   Dialog,
   DialogContent,
@@ -24,10 +26,45 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     password: '',
     username: '',
     displayName: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    profilePhoto: ''
   });
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+
+  // Debounced username availability check
+  const checkUsernameAvailability = useCallback(async (username: string) => {
+    if (!username || username.length < 3) {
+      setUsernameAvailable(null);
+      return;
+    }
+
+    setUsernameChecking(true);
+    try {
+      const exists = await checkUsernameExists(username);
+      setUsernameAvailable(!exists);
+    } catch (error) {
+      console.error('Error checking username:', error);
+      setUsernameAvailable(null);
+    } finally {
+      setUsernameChecking(false);
+    }
+  }, []);
+
+  // Debounce the username check
+  useEffect(() => {
+    if (!isLogin && formData.username) {
+      const timeoutId = setTimeout(() => {
+        checkUsernameAvailability(formData.username.toLowerCase().trim());
+      }, 500); // 500ms delay
+
+      return () => clearTimeout(timeoutId);
+    } else {
+      setUsernameAvailable(null);
+    }
+  }, [formData.username, isLogin, checkUsernameAvailability]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -36,6 +73,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       [name]: value
     }));
     setErrors([]); // Clear errors when user types
+  };
+
+  const handleImageChange = (imageUrl: string) => {
+    setFormData(prev => ({
+      ...prev,
+      profilePhoto: imageUrl
+    }));
+    setErrors([]); // Clear errors when user uploads image
   };
 
   const validateForm = () => {
@@ -56,12 +101,22 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     if (!isLogin) {
       if (!formData.username) {
         newErrors.push('Username is required');
-      } else if (formData.username.length < 2) {
-        newErrors.push('Username must be at least 2 characters');
+      } else if (formData.username.length < 3) {
+        newErrors.push('Username must be at least 3 characters');
+      } else if (formData.username.length > 20) {
+        newErrors.push('Username must be less than 20 characters');
+      } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+        newErrors.push('Username can only contain letters, numbers, and underscores');
+      } else if (usernameAvailable === false) {
+        newErrors.push('Username is already taken. Please choose a different username.');
+      } else if (usernameChecking) {
+        newErrors.push('Please wait while we check username availability');
       }
 
       if (!formData.displayName) {
         newErrors.push('Display name is required');
+      } else if (formData.displayName.length < 2) {
+        newErrors.push('Display name must be at least 2 characters');
       }
 
       if (!formData.confirmPassword) {
@@ -85,7 +140,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       if (isLogin) {
         await login(formData.email, formData.password);
       } else {
-        await register(formData.email, formData.password, formData.username, formData.displayName);
+        await register(formData.email, formData.password, formData.username, formData.displayName, formData.profilePhoto);
       }
       onClose();
       setFormData({
@@ -93,7 +148,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         password: '',
         username: '',
         displayName: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        profilePhoto: ''
       });
     } catch (error: unknown) {
       setErrors([error instanceof Error ? error.message : 'An error occurred']);
@@ -105,12 +161,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setErrors([]);
+    setUsernameAvailable(null); // Reset username availability check
     setFormData({
       email: '',
       password: '',
       username: '',
       displayName: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      profilePhoto: ''
     });
   };
 
@@ -132,6 +190,22 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               ))}
             </div>
           )}
+          {/* Profile Photo (Register only) */}
+          {!isLogin && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Profile Photo (Optional)
+              </label>
+              <div className="flex justify-center">
+                <ImageUpload
+                  currentImage={formData.profilePhoto}
+                  onImageChange={handleImageChange}
+                  size="lg"
+                  placeholder="Add photo"
+                />
+              </div>
+            </div>
+          )}
 
           {/* Email */}
           <div>
@@ -148,14 +222,51 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           {/* Username (Register only) */}
           {!isLogin && (
             <div>
-              <Input
-                type="text"
-                name="username"
-                placeholder="Username (e.g., johndoe)"
-                value={formData.username}
-                onChange={handleInputChange}
-                required
-              />
+              <div className="relative">
+                <Input
+                  type="text"
+                  name="username"
+                  placeholder="Username (e.g., johndoe)"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  required
+                  maxLength={20}
+                  className={`pr-8 ${usernameAvailable === true ? 'border-green-500 focus:border-green-500' :
+                    usernameAvailable === false ? 'border-red-500 focus:border-red-500' :
+                      ''
+                    }`}
+                />
+                {formData.username && formData.username.length >= 3 && (
+                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                    {usernameChecking ? (
+                      <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-blue-600 rounded-full"></div>
+                    ) : usernameAvailable === true ? (
+                      <svg className="h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : usernameAvailable === false ? (
+                      <svg className="h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+              <div className="mt-1">
+                <p className="text-xs text-gray-500">
+                  3-20 characters, letters, numbers, and underscores only. Will be converted to lowercase.
+                </p>
+                {formData.username && formData.username.length >= 3 && !usernameChecking && (
+                  <p className={`text-xs mt-1 ${usernameAvailable === true ? 'text-green-600' :
+                    usernameAvailable === false ? 'text-red-600' :
+                      ''
+                    }`}>
+                    {usernameAvailable === true ? '✓ Username is available' :
+                      usernameAvailable === false ? '✗ Username is already taken' :
+                        ''}
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -172,6 +283,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               />
             </div>
           )}
+
+
 
           {/* Password */}
           <div>
@@ -203,7 +316,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <Button
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700"
-            disabled={loading}
+            disabled={loading || (!!formData.username && usernameChecking)}
           >
             {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
           </Button>

@@ -1,20 +1,39 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { User, LogOut, PenTool, Home, BookOpen } from 'lucide-react';
+import { User, LogOut, PenTool, Home, BookOpen, Settings, ChevronDown } from 'lucide-react';
 import AuthModal from './AuthModal';
+import UserSettingsModal from './UserSettingsModal';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
       await logout();
+      setShowDropdown(false);
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -59,9 +78,12 @@ const Navbar = () => {
           {/* User Actions */}
           <div className="flex items-center space-x-4">
             {user ? (
-              <div className="flex items-center space-x-3">
-                {/* User Profile */}
-                <Link href={`/user/${user.username}`} className="flex items-center space-x-2 hover:bg-gray-100 rounded-lg p-2 transition-colors">
+              <div className="relative" ref={dropdownRef}>
+                {/* User Dropdown Trigger */}
+                <button
+                  onClick={() => setShowDropdown(!showDropdown)}
+                  className="flex items-center space-x-2 hover:bg-gray-100 rounded-lg p-2 transition-colors"
+                >
                   {user.photoURL ? (
                     <Image
                       src={user.photoURL}
@@ -78,18 +100,55 @@ const Navbar = () => {
                   <span className="text-sm font-medium text-gray-700 hidden sm:block">
                     {user.displayName || user.username}
                   </span>
-                </Link>
+                  <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+                </button>
 
-                {/* Logout Button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleLogout}
-                  className="text-gray-600 hover:text-red-600"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span className="hidden sm:inline ml-1">Logout</span>
-                </Button>
+                {/* Dropdown Menu */}
+                {showDropdown && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                    {/* User Info */}
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-sm font-medium text-gray-900">
+                        {user.displayName || user.username}
+                      </p>
+                      <p className="text-sm text-gray-500">@{user.username}</p>
+                      <p className="text-xs text-gray-400 mt-1">{user.email}</p>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-1">
+                      <Link
+                        href={`/user/${user.username}`}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <User className="h-4 w-4 mr-3" />
+                        View Profile
+                      </Link>
+
+                      <button
+                        onClick={() => {
+                          setShowSettingsModal(true);
+                          setShowDropdown(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      >
+                        <Settings className="h-4 w-4 mr-3" />
+                        Settings
+                      </button>
+
+                      <hr className="my-1 border-gray-100" />
+
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="h-4 w-4 mr-3" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <Button
@@ -107,6 +166,12 @@ const Navbar = () => {
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
+      />
+
+      {/* User Settings Modal */}
+      <UserSettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
       />
     </nav>
   );

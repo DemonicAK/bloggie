@@ -111,7 +111,14 @@ export default function UserProfile() {
 
                             <div className="flex items-center text-sm text-gray-500 mb-4">
                                 <Calendar className="h-4 w-4 mr-2" />
-                                Joined {formatDistance(new Date(user.createdAt), new Date(), { addSuffix: true })}
+                                Joined {(() => {
+                                    try {
+                                        const date = user.createdAt instanceof Date ? user.createdAt : new Date(user.createdAt);
+                                        return isNaN(date.getTime()) ? 'recently' : formatDistance(date, new Date(), { addSuffix: true });
+                                    } catch {
+                                        return 'recently';
+                                    }
+                                })()}
                             </div>
 
                             {/* Stats */}
