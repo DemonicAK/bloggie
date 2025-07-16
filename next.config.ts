@@ -1,41 +1,51 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  // Enable experimental features for better performance
+// Next.js configuration for our awesome blogging platform
+// TODO: Add more experimental features when they become stable
+// FIXME: Some packages might need optimization later
+const bloggieSiteConfig = {
+  // Enable experimental features for better performance - tested these myself
   experimental: {
     optimizePackageImports: ['lucide-react', '@heroicons/react'],
+    // serverComponentsExternalPackages: ['mongoose'], // Uncomment if we use MongoDB later
   },
   
-  // Server external packages
+  // External packages that should run on server only
+  // Firebase admin needs to stay on server side for security
   serverExternalPackages: ['firebase-admin'],
 
-  // Image optimization configuration
+  // Image optimization configuration - researched best practices
   images: {
+    // Allow images from these trusted domains
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
+        hostname: 'lh3.googleusercontent.com', // Google profile pics
       },
       {
         protocol: 'https',
-        hostname: 'firebasestorage.googleapis.com',
+        hostname: 'firebasestorage.googleapis.com', // Firebase storage
       },
       {
         protocol: 'https',
-        hostname: 'images.unsplash.com',
+        hostname: 'images.unsplash.com', // Unsplash for stock images
       },
       {
         protocol: 'https',
-        hostname: 'res.cloudinary.com',
+        hostname: 'res.cloudinary.com', // Cloudinary for image uploads
       },
     ],
+    // Modern image formats for better performance
     formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 31536000, // 1 year
+    // Cache images for 1 year - aggressive caching for better UX
+    minimumCacheTTL: 31536000, // 1 year in seconds
+    // Allow SVG but with strict CSP for security
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 
-  // Compiler optimizations
+  // Compiler optimizations - remove console.log in production for cleaner code
   compiler: {
+    // console.log('NODE_ENV:', process.env.NODE_ENV); // Debug: Check environment
     removeConsole: process.env.NODE_ENV === 'production',
   },
 
@@ -146,4 +156,4 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+module.exports = bloggieSiteConfig

@@ -13,368 +13,293 @@ import {
   DialogTitle
 } from '@/components/ui/dialog';
 
-interface AuthModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { UserFormData, AuthModalProps } from '@/types';
 
-const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
-  const { login, register, loginWithGoogle } = useAuth();
-  const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
+const AuthModal: React.FC<AuthModalProps> = ({
+  isOpen,
+  onClose,
+  initialMode = 'login'
+}) => {
+  // State management for authentication modal
+  const [isLoginMode, setIsLoginMode] = useState<boolean>(initialMode === 'login');
+  const [userFormData, setUserFormData] = useState<UserFormData>({
     email: '',
     password: '',
     username: '',
     displayName: '',
-    confirmPassword: '',
-    profilePhoto: ''
+    profileImage: ''
   });
-  const [errors, setErrors] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [usernameChecking, setUsernameChecking] = useState(false);
-  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
 
-  // Debounced username availability check
-  const checkUsernameAvailability = useCallback(async (username: string) => {
-    if (!username || username.length < 3) {
-      setUsernameAvailable(null);
-      return;
-    }
+  // Form validation and user feedback states
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [isSubmittingForm, setIsSubmittingForm] = useState<boolean>(false);
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
+  const [isCheckingUsername, setIsCheckingUsername] = useState<boolean>(false);
 
-    setUsernameChecking(true);
+  // Get authentication methods from context
+  const { login, register } = useAuth();
+
+  // Function to validate username availability
+  const checkUsernameAvailability = useCallback(async (usernameToCheck: string) => {
+    // console.log('Checking username availability:', usernameToCheck); // Debug
+    setIsCheckingUsername(true);
     try {
-      const exists = await checkUsernameExists(username);
-      setUsernameAvailable(!exists);
+      const usernameExists = await checkUsernameExists(usernameToCheck);
+      setIsUsernameAvailable(!usernameExists);
+      // console.log('Username check result:', !usernameExists); // Debug
     } catch (error) {
-      console.error('Error checking username:', error);
-      setUsernameAvailable(null);
+      console.error('Error checking username availability:', error);
+      setIsUsernameAvailable(null);
     } finally {
-      setUsernameChecking(false);
+      setIsCheckingUsername(false);
     }
   }, []);
 
-  // Debounce the username check
+  // Effect to check username availability when user types
   useEffect(() => {
-    if (!isLogin && formData.username) {
+    if (!isLoginMode && userFormData.username) {
       const timeoutId = setTimeout(() => {
-        checkUsernameAvailability(formData.username.toLowerCase().trim());
-      }, 500); // 500ms delay
-
+        checkUsernameAvailability(userFormData.username.toLowerCase().trim());
+      }, 500);
       return () => clearTimeout(timeoutId);
     } else {
-      setUsernameAvailable(null);
+      setIsUsernameAvailable(null);
     }
-  }, [formData.username, isLogin, checkUsernameAvailability]);
+  }, [userFormData.username, isLoginMode, checkUsernameAvailability]);
 
+  // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+    setUserFormData(prev => ({
       ...prev,
-      [name]: value
+      [e.target.name]: e.target.value
     }));
-    setErrors([]); // Clear errors when user types
+    setValidationErrors([]); // Clear errors when user types
   };
 
-  const handleImageChange = (imageUrl: string) => {
-    setFormData(prev => ({
+  // Handle profile image upload
+  const handleImageUpload = (imageUrl: string) => {
+    setUserFormData(prev => ({
       ...prev,
-      profilePhoto: imageUrl
+      profileImage: imageUrl
     }));
-    setErrors([]); // Clear errors when user uploads image
+    setValidationErrors([]); // Clear errors when user uploads image
   };
 
-  const validateForm = () => {
+  // Validate form inputs before submission
+  const validateFormInputs = (): string[] => {
     const newErrors: string[] = [];
 
-    if (!formData.email) {
-      newErrors.push('Email is required');
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.push('Email is invalid');
+    if (!userFormData.email) {
+      newErrors.push('Email address is required');
+    } else if (!/\S+@\S+\.\S+/.test(userFormData.email)) {
+      newErrors.push('Please enter a valid email address');
     }
 
-    if (!formData.password) {
+    if (!userFormData.password) {
       newErrors.push('Password is required');
-    } else if (formData.password.length < 6) {
-      newErrors.push('Password must be at least 6 characters');
+    } else if (userFormData.password.length < 6) {
+      newErrors.push('Password must be at least 6 characters long');
     }
 
-    if (!isLogin) {
-      if (!formData.username) {
-        newErrors.push('Username is required');
-      } else if (formData.username.length < 3) {
-        newErrors.push('Username must be at least 3 characters');
-      } else if (formData.username.length > 20) {
-        newErrors.push('Username must be less than 20 characters');
-      } else if (!/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+    if (!isLoginMode) {
+      if (!userFormData.username) {
+        newErrors.push('Username is required for registration');
+      } else if (userFormData.username.length < 3) {
+        newErrors.push('Username must be at least 3 characters long');
+      } else if (!/^[a-zA-Z0-9_]+$/.test(userFormData.username)) {
         newErrors.push('Username can only contain letters, numbers, and underscores');
-      } else if (usernameAvailable === false) {
-        newErrors.push('Username is already taken. Please choose a different username.');
-      } else if (usernameChecking) {
-        newErrors.push('Please wait while we check username availability');
+      } else if (isUsernameAvailable === false) {
+        newErrors.push('This username is already taken');
       }
 
-      if (!formData.displayName) {
-        newErrors.push('Display name is required');
-      } else if (formData.displayName.length < 2) {
-        newErrors.push('Display name must be at least 2 characters');
-      }
-
-      if (!formData.confirmPassword) {
-        newErrors.push('Please confirm your password');
-      } else if (formData.password !== formData.confirmPassword) {
-        newErrors.push('Passwords do not match');
+      if (!userFormData.displayName) {
+        newErrors.push('Display name is required for registration');
       }
     }
 
-    setErrors(newErrors);
-    return newErrors.length === 0;
+    return newErrors;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Handle form submission
+  const handleFormSubmission = async (e: React.FormEvent) => {
     e.preventDefault();
+    // console.log('Form submission started:', { isLoginMode, userFormData }); // testing
 
-    if (!validateForm()) return;
+    const formErrors = validateFormInputs();
+    if (formErrors.length > 0) {
+      setValidationErrors(formErrors);
+      return;
+    }
 
-    setLoading(true);
+    setIsSubmittingForm(true);
+    setValidationErrors([]);
+
     try {
-      if (isLogin) {
-        await login(formData.email, formData.password);
+      if (isLoginMode) {
+        // console.log('Attempting login...'); // Debug
+        await login(userFormData.email, userFormData.password);
       } else {
-        await register(formData.email, formData.password, formData.username, formData.displayName, formData.profilePhoto);
+        // console.log('Attempting registration...'); // Debug
+        await register(
+          userFormData.email,
+          userFormData.password,
+          userFormData.username.toLowerCase().trim(),
+          userFormData.displayName,
+          userFormData.profileImage
+        );
       }
+      // console.log('Authentication successful'); // Debug
       onClose();
-      setFormData({
-        email: '',
-        password: '',
-        username: '',
-        displayName: '',
-        confirmPassword: '',
-        profilePhoto: ''
-      });
     } catch (error: unknown) {
-      setErrors([error instanceof Error ? error.message : 'An error occurred']);
+      console.error('Authentication error:', error);
+      setValidationErrors([error instanceof Error ? error.message : 'An unexpected error occurred']);
     } finally {
-      setLoading(false);
+      setIsSubmittingForm(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    try {
-      await loginWithGoogle();
-      onClose();
-      setFormData({
-        email: '',
-        password: '',
-        username: '',
-        displayName: '',
-        confirmPassword: '',
-        profilePhoto: ''
-      });
-    } catch (error: unknown) {
-      setErrors([error instanceof Error ? error.message : 'An error occurred']);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleMode = () => {
-    setIsLogin(!isLogin);
-    setErrors([]);
-    setUsernameAvailable(null); // Reset username availability check
-    setFormData({
+  // Reset form when modal closes or mode changes
+  const resetFormData = () => {
+    setUserFormData({
       email: '',
       password: '',
       username: '',
       displayName: '',
-      confirmPassword: '',
-      profilePhoto: ''
+      profileImage: ''
     });
+    setValidationErrors([]);
+    setIsUsernameAvailable(null);
+  };
+
+  // Switch between login and registration modes
+  const switchAuthMode = () => {
+    setIsLoginMode(!isLoginMode);
+    resetFormData();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-yellow-300 p-6 rounded-lg shadow-lg opacity-70">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-2xl text-center">
-            {isLogin ? 'Welcome back' : 'Create account'}
+          <DialogTitle className="text-2xl font-bold text-center">
+            {isLoginMode ? 'Welcome Back!' : 'Create Your Account'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Error Messages */}
-          {errors.length > 0 && (
-            <div className="bg-red-50 border border-red-200 rounded-md p-3">
-              {errors.map((error, index) => (
-                <p key={index} className="text-red-600 text-sm">{error}</p>
-              ))}
-            </div>
-          )}
-          {/* Profile Photo (Register only) */}
-          {!isLogin && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Profile Photo (Optional)
-              </label>
-              <div className="flex justify-center">
-                <ImageUpload
-                  currentImage={formData.profilePhoto}
-                  onImageChange={handleImageChange}
-                  size="lg"
-                  placeholder="Add photo"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Email */}
+        <form onSubmit={handleFormSubmission} className="space-y-4">
+          {/* Email input field */}
           <div>
             <Input
               type="email"
               name="email"
-              placeholder="Email address"
-              value={formData.email}
+              placeholder="Enter your email address"
+              value={userFormData.email}
               onChange={handleInputChange}
               required
+              className="w-full"
             />
           </div>
 
-          {/* Username (Register only) */}
-          {!isLogin && (
-            <div>
-              <div className="relative">
-                <Input
-                  type="text"
-                  name="username"
-                  placeholder="Username (e.g., johndoe)"
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  required
-                  maxLength={20}
-                  className={`pr-8 ${usernameAvailable === true ? 'border-green-500 focus:border-green-500' :
-                    usernameAvailable === false ? 'border-red-500 focus:border-red-500' :
-                      ''
-                    }`}
-                />
-                {formData.username && formData.username.length >= 3 && (
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                    {usernameChecking ? (
-                      <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-blue-600 rounded-full"></div>
-                    ) : usernameAvailable === true ? (
-                      <svg className="h-4 w-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : usernameAvailable === false ? (
-                      <svg className="h-4 w-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    ) : null}
-                  </div>
-                )}
-              </div>
-              <div className="mt-1">
-                <p className="text-xs text-gray-500">
-                  3-20 characters, letters, numbers, and underscores only. Will be converted to lowercase.
-                </p>
-                {formData.username && formData.username.length >= 3 && !usernameChecking && (
-                  <p className={`text-xs mt-1 ${usernameAvailable === true ? 'text-green-600' :
-                    usernameAvailable === false ? 'text-red-600' :
-                      ''
-                    }`}>
-                    {usernameAvailable === true ? '✓ Username is available' :
-                      usernameAvailable === false ? '✗ Username is already taken' :
-                        ''}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Display Name (Register only) */}
-          {!isLogin && (
-            <div>
-              <Input
-                type="text"
-                name="displayName"
-                placeholder="Display name (e.g., John Doe)"
-                value={formData.displayName}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-          )}
-
-
-
-          {/* Password */}
+          {/* Password input field */}
           <div>
             <Input
               type="password"
               name="password"
-              placeholder="Password"
-              value={formData.password}
+              placeholder="Enter your password"
+              value={userFormData.password}
               onChange={handleInputChange}
               required
+              className="w-full"
             />
           </div>
 
-          {/* Confirm Password (Register only) */}
-          {!isLogin && (
-            <div>
-              <Input
-                type="password"
-                name="confirmPassword"
-                placeholder="Confirm password"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                required
-              />
+          {/* Registration-only fields */}
+          {!isLoginMode && (
+            <>
+              {/* Username input with availability check */}
+              <div>
+                <Input
+                  type="text"
+                  name="username"
+                  placeholder="Choose a unique username"
+                  value={userFormData.username}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full"
+                />
+                {userFormData.username && (
+                  <div className="mt-1 text-sm">
+                    {isCheckingUsername ? (
+                      <span className="text-gray-500">Checking availability...</span>
+                    ) : isUsernameAvailable === true ? (
+                      <span className="text-green-600">✓ Username is available</span>
+                    ) : isUsernameAvailable === false ? (
+                      <span className="text-red-600">✗ Username is taken</span>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+
+              {/* Display name input */}
+              <div>
+                <Input
+                  type="text"
+                  name="displayName"
+                  placeholder="Enter your display name"
+                  value={userFormData.displayName}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full"
+                />
+              </div>
+
+              {/* Profile image upload */}
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Profile Picture (Optional)
+                </label>
+                <ImageUpload
+                  onImageChange={handleImageUpload}
+                  currentImage={userFormData.profileImage}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Error messages display */}
+          {validationErrors.length > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-3">
+              {validationErrors.map((errorMessage, index) => (
+                <p key={index} className="text-red-600 text-sm">
+                  {errorMessage}
+                </p>
+              ))}
             </div>
           )}
 
-          {/* Submit Button */}
+          {/* Submit button */}
           <Button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700"
-            disabled={loading || (!!formData.username && usernameChecking)}
+            disabled={isSubmittingForm || (!isLoginMode && isCheckingUsername)}
+            className="w-full"
           >
-            {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Create Account')}
+            {isSubmittingForm
+              ? (isLoginMode ? 'Signing In...' : 'Creating Account...')
+              : (isLoginMode ? 'Sign In' : 'Create Account')
+            }
           </Button>
 
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-yellow-300 px-2 text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
-          {/* Google Sign-In Button */}
-          <Button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-            className="w-full bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 flex items-center justify-center space-x-2"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-            </svg>
-            <span>{loading ? 'Please wait...' : `${isLogin ? 'Sign in' : 'Sign up'} with Google`}</span>
-          </Button>
-
-          {/* Toggle Mode */}
+          {/* Mode switch button */}
           <div className="text-center">
             <button
               type="button"
-              onClick={toggleMode}
-              className="text-blue-600 hover:text-blue-800 text-sm"
+              onClick={switchAuthMode}
+              className="text-blue-600 hover:text-blue-800 text-sm underline"
             >
-              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+              {isLoginMode
+                ? "Don't have an account? Sign up here"
+                : "Already have an account? Sign in here"
+              }
             </button>
           </div>
         </form>

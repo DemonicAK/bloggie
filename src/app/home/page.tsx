@@ -10,7 +10,7 @@ export const metadata: Metadata = {
         title: 'Bloggie - Technical Blog Platform for Developers',
         description: 'Discover programming tutorials, software engineering insights, and technical articles from expert developers.',
         type: 'website',
-        url: 'https://bloggie.dev/home',
+        url: 'https://bloggie.arijitkar.com/home',
     },
     twitter: {
         card: 'summary_large_image',

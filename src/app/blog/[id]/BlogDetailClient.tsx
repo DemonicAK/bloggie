@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
-import { getBlog, toggleLike, toggleBookmark, addComment, getUserById, getUsersByIds } from '@/lib/blogService';
+import { getBlog, toggleBlogLike, toggleBlogBookmark, addCommentToBlog, getUserById, getUsersByIds } from '@/lib/blogService';
 import { Blog, CreateCommentData, User } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -96,7 +96,7 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
 
         setIsLiking(true);
         try {
-            await toggleLike(blog.id, user.uid);
+            await toggleBlogLike(blog.id, user.uid);
             // Refresh blog data
             await fetchBlog();
         } catch (error) {
@@ -111,7 +111,7 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
 
         setIsBookmarking(true);
         try {
-            await toggleBookmark(blog.id, user.uid);
+            await toggleBlogBookmark(blog.id, user.uid);
             // Refresh blog data
             await fetchBlog();
         } catch (error) {
@@ -130,7 +130,7 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
             const commentData: CreateCommentData = {
                 content: newComment.trim()
             };
-            await addComment(blog.id, user.uid, commentData);
+            await addCommentToBlog(blog.id, user.uid, commentData);
             setNewComment('');
             // Refresh blog data to show new comment
             await fetchBlog();

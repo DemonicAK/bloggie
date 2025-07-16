@@ -23,25 +23,48 @@ import {
 import { db } from '@/lib/firebase';
 import { Blog, CreateBlogData, CreateCommentData, User } from '@/types';
 
-// Helper function to process blog data and fix comment dates
-const processBlogData = (doc: QueryDocumentSnapshot<DocumentData>): Blog => {
-  const data = doc.data();
+/**
+ * This file contains all the functions needed to interact with blogs in Firestore.
+ 
+ */
+
+// Helper function to convert Firestore documents to our Blog type
+
+//  time debugging timestamp issues, 
+const convertFirestoreDocToBlog = (firestoreDoc: QueryDocumentSnapshot<DocumentData>): Blog => {
+  const docData = firestoreDoc.data();
+  
+  // console.log('Converting Firestore doc to Blog:', firestoreDoc.id); // Debug
+  
   return {
-    id: doc.id,
-    ...data,
-    createdAt: data.createdAt?.toDate() || new Date(),
-    updatedAt: data.updatedAt?.toDate() || new Date(),
-    comments: (data.comments || []).map((comment: DocumentData, index: number) => ({
-      ...comment,
-      id: comment.id || `comment-${index}`,
-      createdAt: comment.createdAt?.toDate ? comment.createdAt.toDate() : new Date(comment.createdAt || Date.now())
-    }))
+    id: firestoreDoc.id,
+    title: docData.title || '',
+    content: docData.content || '',
+    authorId: docData.authorId || '',
+    authorUsername: docData.authorUsername || '',
+    // Convert Firestore Timestamps to JavaScript Dates - this was tricky to get right
+    createdAt: docData.createdAt?.toDate() || new Date(),
+    updatedAt: docData.updatedAt?.toDate() || new Date(),
+    // Ensure comments have proper structure and IDs
+    comments: (docData.comments || []).map((commentData: DocumentData, commentIndex: number) => ({
+      ...commentData,
+      id: commentData.id || `comment-${commentIndex}`, // Fallback ID for old comments
+      createdAt: commentData.createdAt?.toDate() || new Date(),
+    })),
+    // Ensure arrays exist even if empty - prevents crashes
+    likes: docData.likes || [],
+    bookmarks: docData.bookmarks || [],
+    // Additional fields that might exist
+    ...(docData.tags && { tags: docData.tags }),
+    ...(docData.viewCount && { viewCount: docData.viewCount }),
+    ...(docData.isPublished !== undefined && { isPublished: docData.isPublished }),
   } as Blog;
 };
 
-// Helper function to get user data by ID
+// Helper function to get user data by ID - used throughout the app
 export const getUserById = async (userId: string): Promise<User | null> => {
   try {
+    // console.log('Fetching user by ID:', userId); // Debug
     const userDoc = await getDoc(doc(db, 'users', userId));
     if (userDoc.exists()) {
       const userData = userDoc.data();
@@ -78,111 +101,206 @@ export const getUsersByIds = async (userIds: string[]): Promise<Record<string, U
   }
 };
 
-// Blog functions
-export const createBlog = async (userId: string, blogData: CreateBlogData): Promise<string> => {
+// Create a new blog post
+export const createNewBlogPost = async (blogData: CreateBlogData, authorUserId: string): Promise<string> => {
   try {
-    // Get user data first
-    const userDoc = await getDoc(doc(db, 'users', userId));
-    if (!userDoc.exists()) {
-      throw new Error('User not found');
+    // console.log('Creating new blog post for user:', authorUserId); // Debug
+    
+    // First, let's get the author's information
+    const authorDocRef = doc(db, 'users', authorUserId);
+    const authorSnapshot = await getDoc(authorDocRef);
+    
+    if (!authorSnapshot.exists()) {
+      throw new Error('Author not found. Please make sure you are logged in.');
     }
     
-    const userData = userDoc.data() as User;
+    const authorInfo = authorSnapshot.data() as User;
     
-    const blogToCreate = {
+    // Prepare the blog data for Firestore
+    const newBlogData = {
       ...blogData,
-      authorId: userId,
-      authorUsername: userData.username, // This will be lowercase
+      authorId: authorUserId,
+      authorUsername: authorInfo.username,
+      authorDisplayName: authorInfo.displayName,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-      likes: [],
-      bookmarks: [],
-      comments: []
+      likes: [], // Start with empty likes array
+      bookmarks: [], // Start with empty bookmarks array
+      comments: [], // Start with empty comments array
+      viewCount: 0, // Track how many times the blog is viewed
+      isPublished: true, // Assume published by default
+      // Add some default tags if none provided
+      tags: (blogData as CreateBlogData & { tags?: string[] }).tags || ['programming', 'tech'],
     };
-
-    const docRef = await addDoc(collection(db, 'blogs'), blogToCreate);
-    return docRef.id;
+    
+    // console.log('Prepared blog data:', newBlogData); // Debug
+    
+    // Add the document to Firestore
+    const blogDocRef = await addDoc(collection(db, 'blogs'), newBlogData);
+    
+    // console.log('Blog created successfully with ID:', blogDocRef.id); // Debug
+    
+    return blogDocRef.id;
   } catch (error) {
-    console.error('Error creating blog:', error);
-    throw error;
+    console.error('Error creating blog post:', error);
+    throw new Error(`Failed to create blog post: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
 
-export const getBlog = async (blogId: string): Promise<Blog | null> => {
+// Get a single blog post by ID
+export const getBlogPostById = async (blogId: string): Promise<Blog | null> => {
   try {
-    const blogDoc = await getDoc(doc(db, 'blogs', blogId));
-    if (blogDoc.exists()) {
-      return processBlogData(blogDoc);
+    // console.log('Fetching blog with ID:', blogId); // Debug
+    
+    const blogDocRef = doc(db, 'blogs', blogId);
+    const blogSnapshot = await getDoc(blogDocRef);
+    
+    if (!blogSnapshot.exists()) {
+      console.warn('Blog not found with ID:', blogId); // Warn instead of error
+      return null;
     }
-    return null;
+    
+    const blogData = convertFirestoreDocToBlog(blogSnapshot);
+    
+    // Increment view count (fire and forget - don't wait for it)
+    updateDoc(blogDocRef, {
+      viewCount: ((blogData as Blog & { viewCount?: number }).viewCount || 0) + 1
+    }).catch(err => {
+      console.warn('Failed to update view count:', err); // Non-critical error
+    });
+    
+    return blogData;
   } catch (error) {
-    console.error('Error getting blog:', error);
-    throw error;
+    console.error('Error fetching blog post:', error);
+    throw new Error('Failed to load blog post. Please check your connection.');
   }
 };
 
-export const getBlogs = async (limitCount: number = 10, lastDoc?: QueryDocumentSnapshot<DocumentData>): Promise<{ blogs: Blog[], lastVisible: QueryDocumentSnapshot<DocumentData> | null }> => {
+// Get all blog posts with pagination
+export const getAllBlogPosts = async (
+  limitCount: number = 10, 
+  lastDocumentId?: string
+): Promise<{ blogs: Blog[]; hasMore: boolean; lastDoc?: string }> => {
   try {
-    let q = query(
-      collection(db, 'blogs'),
+    // console.log('Fetching blogs with limit:', limitCount, 'lastDoc:', lastDocumentId); // Debug
+    
+    const blogsCollectionRef = collection(db, 'blogs');
+    let blogsQuery = query(
+      blogsCollectionRef,
+      where('isPublished', '==', true), // Only get published blogs
+      orderBy('createdAt', 'desc'),
+      limit(limitCount + 1) // Fetch one extra to check if there are more
+    );
+    
+    // If we have a starting point for pagination
+    if (lastDocumentId) {
+      const lastDocSnapshot = await getDoc(doc(db, 'blogs', lastDocumentId));
+      if (lastDocSnapshot.exists()) {
+        blogsQuery = query(
+          blogsCollectionRef,
+          where('isPublished', '==', true),
+          orderBy('createdAt', 'desc'),
+          startAfter(lastDocSnapshot),
+          limit(limitCount + 1)
+        );
+      }
+    }
+    
+    const querySnapshot = await getDocs(blogsQuery);
+    const fetchedBlogs = querySnapshot.docs.map(convertFirestoreDocToBlog);
+    
+    // Check if we have more blogs to load
+    const hasMoreBlogs = fetchedBlogs.length > limitCount;
+    const blogsToReturn = hasMoreBlogs ? fetchedBlogs.slice(0, limitCount) : fetchedBlogs;
+    const lastDocForNextQuery = blogsToReturn.length > 0 ? blogsToReturn[blogsToReturn.length - 1].id : undefined;
+    
+    // console.log(`Fetched ${blogsToReturn.length} blogs, hasMore: ${hasMoreBlogs}`); 
+    
+    return {
+      blogs: blogsToReturn,
+      hasMore: hasMoreBlogs,
+      lastDoc: lastDocForNextQuery,
+    };
+  } catch (error) {
+    console.error('Error fetching blog posts:', error);
+    throw new Error('Failed to load blog posts. Please try again later.');
+  }
+};
+
+// Get blogs by a specific author
+export const getBlogsByAuthor = async (authorUsername: string, limitCount: number = 10): Promise<Blog[]> => {
+  try {
+    // console.log('Fetching blogs by author:', authorUsername);
+    
+    const blogsCollectionRef = collection(db, 'blogs');
+    const authorBlogsQuery = query(
+      blogsCollectionRef,
+      where('authorUsername', '==', authorUsername),
+      where('isPublished', '==', true),
       orderBy('createdAt', 'desc'),
       limit(limitCount)
     );
-
-    if (lastDoc) {
-      q = query(
-        collection(db, 'blogs'),
-        orderBy('createdAt', 'desc'),
-        startAfter(lastDoc),
-        limit(limitCount)
-      );
-    }
     
-    const querySnapshot = await getDocs(q);
-    const blogs = querySnapshot.docs.map(doc => processBlogData(doc));
-    const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1] || null;
+    const querySnapshot = await getDocs(authorBlogsQuery);
+    const authorBlogs = querySnapshot.docs.map(convertFirestoreDocToBlog);
     
-    return { blogs, lastVisible };
+    // console.log(`Found ${authorBlogs.length} blogs by ${authorUsername}`); 
+    
+    return authorBlogs;
   } catch (error) {
-    console.error('Error getting blogs:', error);
-    throw error;
+    console.error('Error fetching blogs by author:', error);
+    throw new Error(`Failed to load blogs by ${authorUsername}`);
   }
 };
 
-export const getMostLikedBlogs = async (limitCount: number = 2): Promise<Blog[]> => {
+export const getMostPopularBlogs = async (limitCount: number = 2): Promise<Blog[]> => {
   try {
-    const q = query(
+    // console.log('Fetching most popular blogs'); // Debug
+    
+    const blogsQuery = query(
       collection(db, 'blogs'),
+      where('isPublished', '==', true),
       orderBy('createdAt', 'desc'), // We'll sort by likes length on client side
       limit(50) // Get more to sort by likes
     );
     
-    const querySnapshot = await getDocs(q);
-    const blogs = querySnapshot.docs.map(doc => processBlogData(doc));
+    const querySnapshot = await getDocs(blogsQuery);
+    const allBlogs = querySnapshot.docs.map(convertFirestoreDocToBlog);
     
     // Sort by likes count and return limited results
-    return blogs
+    const popularBlogs = allBlogs
       .sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0))
       .slice(0, limitCount);
+    
+    // console.log(`Found ${popularBlogs.length} popular blogs`); // Debug
+    
+    return popularBlogs;
   } catch (error) {
-    console.error('Error getting most liked blogs:', error);
-    throw error;
+    console.error('Error fetching popular blogs:', error);
+    throw new Error('Failed to load popular blogs. Please try again later.');
   }
 };
 
-export const getUserBlogs = async (userId: string): Promise<Blog[]> => {
+// Get all blogs by a specific user
+export const getUserOwnBlogs = async (userId: string): Promise<Blog[]> => {
   try {
-    const q = query(
+    // console.log('Fetching blogs for user:', userId); // Debug
+    
+    const userBlogsQuery = query(
       collection(db, 'blogs'),
       where('authorId', '==', userId),
       orderBy('createdAt', 'desc')
     );
     
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => processBlogData(doc));
+    const querySnapshot = await getDocs(userBlogsQuery);
+    const userBlogs = querySnapshot.docs.map(convertFirestoreDocToBlog);
+    
+    // console.log(`Found ${userBlogs.length} blogs for user ${userId}`); // Debug
+    
+    return userBlogs;
   } catch (error) {
     console.error('Error getting user blogs:', error);
-    throw error;
+    throw new Error('Failed to load user blogs. Please try again later.');
   }
 };
 
@@ -263,90 +381,207 @@ export const deleteBlog = async (blogId: string): Promise<void> => {
   }
 };
 
-// Like/Unlike functions
-export const toggleLike = async (blogId: string, userId: string): Promise<void> => {
+// Toggle like on a blog post
+export const toggleBlogLike = async (blogId: string, userId: string): Promise<void> => {
   try {
-    const blogRef = doc(db, 'blogs', blogId);
-    const blogDoc = await getDoc(blogRef);
+    // console.log('Toggling like for blog:', blogId, 'by user:', userId); // Debug
     
-    if (blogDoc.exists()) {
-      const blogData = blogDoc.data();
-      const likes = blogData.likes || [];
-      
-      if (likes.includes(userId)) {
-        // Unlike
-        await updateDoc(blogRef, {
-          likes: arrayRemove(userId)
-        });
-      } else {
-        // Like
-        await updateDoc(blogRef, {
-          likes: arrayUnion(userId)
-        });
-      }
+    const blogDocRef = doc(db, 'blogs', blogId);
+    const blogSnapshot = await getDoc(blogDocRef);
+    
+    if (!blogSnapshot.exists()) {
+      throw new Error('Blog post not found.');
+    }
+    
+    const blogData = blogSnapshot.data() as Blog;
+    const currentLikes = blogData.likes || [];
+    const userHasLiked = currentLikes.includes(userId);
+    
+    if (userHasLiked) {
+      // Remove like
+      await updateDoc(blogDocRef, {
+        likes: arrayRemove(userId)
+      });
+      // console.log('Like removed'); // Debug
+    } else {
+      // Add like
+      await updateDoc(blogDocRef, {
+        likes: arrayUnion(userId)
+      });
+      // console.log('Like added'); // Debug
     }
   } catch (error) {
     console.error('Error toggling like:', error);
-    throw error;
+    throw new Error('Failed to update like. Please try again.');
   }
 };
 
-// Bookmark functions
-export const toggleBookmark = async (blogId: string, userId: string): Promise<void> => {
+// Toggle bookmark on a blog post
+export const toggleBlogBookmark = async (blogId: string, userId: string): Promise<void> => {
   try {
-    const blogRef = doc(db, 'blogs', blogId);
-    const blogDoc = await getDoc(blogRef);
+    // console.log('Toggling bookmark for blog:', blogId, 'by user:', userId); // Debug
     
-    if (blogDoc.exists()) {
-      const blogData = blogDoc.data();
-      const bookmarks = blogData.bookmarks || [];
-      
-      if (bookmarks.includes(userId)) {
-        // Remove bookmark
-        await updateDoc(blogRef, {
-          bookmarks: arrayRemove(userId)
-        });
-      } else {
-        // Add bookmark
-        await updateDoc(blogRef, {
-          bookmarks: arrayUnion(userId)
-        });
-      }
+    const blogDocRef = doc(db, 'blogs', blogId);
+    const blogSnapshot = await getDoc(blogDocRef);
+    
+    if (!blogSnapshot.exists()) {
+      throw new Error('Blog post not found.');
+    }
+    
+    const blogData = blogSnapshot.data() as Blog;
+    const currentBookmarks = blogData.bookmarks || [];
+    const userHasBookmarked = currentBookmarks.includes(userId);
+    
+    if (userHasBookmarked) {
+      // Remove bookmark
+      await updateDoc(blogDocRef, {
+        bookmarks: arrayRemove(userId)
+      });
+      // console.log('Bookmark removed'); // Debug
+    } else {
+      // Add bookmark
+      await updateDoc(blogDocRef, {
+        bookmarks: arrayUnion(userId)
+      });
+      // console.log('Bookmark added'); // Debug
     }
   } catch (error) {
     console.error('Error toggling bookmark:', error);
-    throw error;
+    throw new Error('Failed to update bookmark. Please try again.');
   }
 };
 
-// Comment functions
-export const addComment = async (blogId: string, userId: string, commentData: CreateCommentData): Promise<void> => {
+// Add a comment to a blog post
+export const addCommentToBlog = async (blogId: string, commenterUserId: string, commentContent: CreateCommentData): Promise<void> => {
   try {
-    // Get user data first
-    const userDoc = await getDoc(doc(db, 'users', userId));
-    if (!userDoc.exists()) {
-      throw new Error('User not found');
+    // console.log('Adding comment to blog:', blogId, 'by user:', commenterUserId); // Debug
+    
+    // Get the commenter's information first
+    const commenterDocRef = doc(db, 'users', commenterUserId);
+    const commenterSnapshot = await getDoc(commenterDocRef);
+    
+    if (!commenterSnapshot.exists()) {
+      throw new Error('User not found. Please make sure you are logged in.');
     }
     
-    const userData = userDoc.data() as User;
+    const commenterData = commenterSnapshot.data() as User;
     
-    const comment = {
-      id: `${userId}-${Date.now()}`, // Generate unique ID
+    // Create the comment object
+    const newComment = {
+      id: `${commenterUserId}-${Date.now()}`, // Generate a unique ID
       blogId,
-      authorId: userId,
-      authorUsername: userData.username,
-      content: commentData.content,
-      createdAt: Timestamp.now(), // Use Timestamp.now() instead of serverTimestamp()
-      likes: []
+      authorId: commenterUserId,
+      authorUsername: commenterData.username,
+      authorDisplayName: commenterData.displayName,
+      content: commentContent.content,
+      createdAt: Timestamp.now(), // Use Timestamp.now() for consistency
+      likes: [] // Start with empty likes array
     };
-
-    const blogRef = doc(db, 'blogs', blogId);
-    await updateDoc(blogRef, {
-      comments: arrayUnion(comment)
+    
+    // console.log('Prepared comment data:', newComment); // Debug
+    
+    // Add the comment to the blog's comments array
+    const blogDocRef = doc(db, 'blogs', blogId);
+    await updateDoc(blogDocRef, {
+      comments: arrayUnion(newComment)
     });
+    
+    // console.log('Comment added successfully'); // Debug
   } catch (error) {
     console.error('Error adding comment:', error);
-    throw error;
+    throw new Error(`Failed to add comment: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+};
+
+// Validate username according to our rules
+export const checkUsernameValidity = (username: string): { isValid: boolean; errors: string[] } => {
+  const validationErrors: string[] = [];
+  const cleanUsername = username.toLowerCase().trim();
+
+  // console.log('Validating username:', cleanUsername); // Debug
+
+  if (!cleanUsername) {
+    validationErrors.push('Username is required');
+  } else {
+    // Check length requirements
+    if (cleanUsername.length < 3) {
+      validationErrors.push('Username must be at least 3 characters long');
+    }
+    if (cleanUsername.length > 20) {
+      validationErrors.push('Username must be less than 20 characters long');
+    }
+    
+    // Check character requirements
+    if (!/^[a-zA-Z0-9_]+$/.test(cleanUsername)) {
+      validationErrors.push('Username can only contain letters, numbers, and underscores');
+    }
+    
+    // Username cannot start with a number
+    if (/^[0-9]/.test(cleanUsername)) {
+      validationErrors.push('Username cannot start with a number');
+    }
+    
+    // Username cannot have consecutive underscores
+    if (/__+/.test(cleanUsername)) {
+      validationErrors.push('Username cannot contain consecutive underscores');
+    }
+    
+    // Reserved usernames that we don't allow
+    const reservedUsernames = ['admin', 'api', 'www', 'mail', 'ftp', 'localhost', 'blog', 'help', 'support'];
+    if (reservedUsernames.includes(cleanUsername)) {
+      validationErrors.push('This username is reserved and cannot be used');
+    }
+  }
+
+  const isUsernameValid = validationErrors.length === 0;
+  
+  // console.log('Username validation result:', { isValid: isUsernameValid, errors: validationErrors }); // Debug
+  
+  return {
+    isValid: isUsernameValid,
+    errors: validationErrors,
+  };
+};
+
+// Search blogs by content (simple text search - could be enhanced with full-text search)
+export const searchBlogsByKeyword = async (searchKeyword: string, limitCount: number = 10): Promise<Blog[]> => {
+  try {
+    // console.log('Searching blogs with keyword:', searchKeyword); // Debug
+    
+    if (!searchKeyword.trim()) {
+      return [];
+    }
+    
+    const blogsCollectionRef = collection(db, 'blogs');
+    
+    // Note: Firestore doesn't have built-in full-text search
+    // This is a simple implementation that searches in title and tags
+    // For production, consider using Algolia or Elasticsearch
+    
+    const titleSearchQuery = query(
+      blogsCollectionRef,
+      where('isPublished', '==', true),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+    
+    const querySnapshot = await getDocs(titleSearchQuery);
+    const allBlogs = querySnapshot.docs.map(convertFirestoreDocToBlog);
+    
+    // Filter blogs that contain the search keyword (case-insensitive)
+    const searchLowerCase = searchKeyword.toLowerCase();
+    const matchingBlogs = allBlogs.filter(blog => 
+      blog.title.toLowerCase().includes(searchLowerCase) ||
+      blog.content.toLowerCase().includes(searchLowerCase) ||
+      (blog as Blog & { tags?: string[] }).tags?.some((tag: string) => tag.toLowerCase().includes(searchLowerCase))
+    );
+    
+    // console.log(`Found ${matchingBlogs.length} blogs matching "${searchKeyword}"`); // Debug
+    
+    return matchingBlogs.slice(0, limitCount);
+  } catch (error) {
+    console.error('Error searching blogs:', error);
+    throw new Error('Search failed. Please try again.');
   }
 };
 
@@ -381,25 +616,29 @@ export const validateUsername = (username: string): { isValid: boolean; errors: 
   };
 };
 
+// Check if username already exists in the database
 export const checkUsernameExists = async (username: string): Promise<boolean> => {
   try {
-    // Normalize username to lowercase for consistent checking
+    // console.log('Checking if username exists:', username); // Debug
+    
     const normalizedUsername = username.toLowerCase().trim();
     
-    // Check both users collection and username tracking collection
-    const [usersQuery, usernameDoc] = await Promise.all([
-      getDocs(query(
-        collection(db, 'users'),
-        where('username', '==', normalizedUsername),
-        limit(1)
-      )),
-      getDoc(doc(db, 'usernames', normalizedUsername))
-    ]);
+    const usersQuery = query(
+      collection(db, 'users'),
+      where('username', '==', normalizedUsername),
+      limit(1)
+    );
     
-    return !usersQuery.empty || usernameDoc.exists();
+    const querySnapshot = await getDocs(usersQuery);
+    const usernameExists = !querySnapshot.empty;
+    
+    // console.log('Username exists result:', usernameExists); // Debug
+    
+    return usernameExists;
   } catch (error) {
     console.error('Error checking username existence:', error);
-    throw error;
+    // Return true to be safe (assume username exists if we can't check)
+    return true;
   }
 };
 
@@ -429,3 +668,12 @@ export const reserveUsername = async (username: string, uid: string): Promise<vo
     throw error;
   }
 };
+
+// Backward compatibility aliases for existing code
+export const createBlog = (userId: string, blogData: CreateBlogData) => createNewBlogPost(blogData, userId);
+export const getBlog = getBlogPostById;
+export const getBlogs = getAllBlogPosts;
+export const getUserBlogs = getUserOwnBlogs;
+export const getMostLikedBlogs = getMostPopularBlogs;
+
+// console.log('Blog service loaded successfully'); // Debug

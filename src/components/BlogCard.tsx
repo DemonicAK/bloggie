@@ -7,7 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Blog, User } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Heart, Bookmark, MessageCircle, User as UserIcon, Calendar, ArrowRight } from 'lucide-react';
-import { toggleLike, toggleBookmark, getUserById } from '@/lib/blogService';
+import { toggleBlogLike, toggleBlogBookmark, getUserById } from '@/lib/blogService';
 import { formatDistance } from 'date-fns';
 
 interface BlogCardProps {
@@ -44,7 +44,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ blog, onUpdate }) => {
 
     setIsLiking(true);
     try {
-      await toggleLike(blog.id, user.uid);
+      await toggleBlogLike(blog.id, user.uid);
       onUpdate?.();
     } catch (error) {
       console.error('Error toggling like:', error);
@@ -59,7 +59,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ blog, onUpdate }) => {
 
     setIsBookmarking(true);
     try {
-      await toggleBookmark(blog.id, user.uid);
+      await toggleBlogBookmark(blog.id, user.uid);
       onUpdate?.();
     } catch (error) {
       console.error('Error toggling bookmark:', error);

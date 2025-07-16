@@ -38,3 +38,24 @@ export interface CreateBlogData {
 export interface CreateCommentData {
   content: string;
 }
+
+// Types and interfaces for better code organization
+export interface UserFormData {
+  email: string;
+  password: string;
+  username: string;
+  displayName: string;
+  profileImage: string;
+}
+
+export interface AuthModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  initialMode?: 'login' | 'register';
+}
+
+ export interface BlogPageProps {
+    params: Promise<{
+        id: string;
+    }>;
+}

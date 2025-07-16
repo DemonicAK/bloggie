@@ -6,7 +6,6 @@ import { getBlogs, getMostLikedBlogs } from '@/lib/blogService';
 import { Blog } from '@/types';
 import { TrendingUp, Clock, Loader2, Sparkles } from 'lucide-react';
 import { GradientBackground, FloatingCard } from '@/components/ui/animated';
-import { QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 
 export default function HomePageClient() {
     const [latestBlogs, setLatestBlogs] = useState<Blog[]>([]);
@@ -15,7 +14,7 @@ export default function HomePageClient() {
     const [loadingMore, setLoadingMore] = useState(false);
     const [activeTab, setActiveTab] = useState<'latest' | 'popular'>('latest');
     const [hasMore, setHasMore] = useState(true);
-    const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+    const [lastDocumentId, setLastDocumentId] = useState<string | undefined>(undefined);
 
     const fetchInitialBlogs = async () => {
         setLoading(true);
@@ -25,9 +24,9 @@ export default function HomePageClient() {
                 getMostLikedBlogs(10)
             ]);
             setLatestBlogs(latestResult.blogs);
-            setLastVisible(latestResult.lastVisible);
+            setLastDocumentId(latestResult.lastDoc);
+            setHasMore(latestResult.hasMore);
             setMostLikedBlogs(popular);
-            setHasMore(latestResult.blogs.length === 10); // If we got 10, there might be more
         } catch (error) {
             console.error('Error fetching blogs:', error);
         } finally {
@@ -41,7 +40,7 @@ export default function HomePageClient() {
         setLoadingMore(true);
         try {
             // Load more blogs using pagination
-            const moreResult = await getBlogs(10, lastVisible || undefined);
+            const moreResult = await getBlogs(10, lastDocumentId);
 
             setLatestBlogs(prev => {
                 const newBlogs = moreResult.blogs.filter(blog =>
@@ -50,14 +49,14 @@ export default function HomePageClient() {
                 return [...prev, ...newBlogs];
             });
 
-            setLastVisible(moreResult.lastVisible);
-            setHasMore(moreResult.blogs.length === 10);
+            setLastDocumentId(moreResult.lastDoc);
+            setHasMore(moreResult.hasMore);
         } catch (error) {
             console.error('Error loading more blogs:', error);
         } finally {
             setLoadingMore(false);
         }
-    }, [loadingMore, hasMore, activeTab, lastVisible]);
+    }, [loadingMore, hasMore, activeTab, lastDocumentId]);
 
     useEffect(() => {
         fetchInitialBlogs();
@@ -90,8 +89,8 @@ export default function HomePageClient() {
                             <button
                                 onClick={() => setActiveTab('latest')}
                                 className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === 'latest'
-                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105'
-                                        : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105'
+                                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
                                     }`}
                             >
                                 <Clock className="h-4 w-4 mr-2" />
@@ -100,8 +99,8 @@ export default function HomePageClient() {
                             <button
                                 onClick={() => setActiveTab('popular')}
                                 className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === 'popular'
-                                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105'
-                                        : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105'
+                                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
                                     }`}
                             >
                                 <TrendingUp className="h-4 w-4 mr-2" />

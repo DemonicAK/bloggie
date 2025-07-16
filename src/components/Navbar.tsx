@@ -153,7 +153,7 @@ const Navbar = () => {
             ) : (
               <Button
                 onClick={() => setShowAuthModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-blue-600 hover:bg-green-700 text-white"
               >
                 Sign In
               </Button>

@@ -104,7 +104,7 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onBlogCreated }) => {
           <PenTool className="relative h-6 w-6 text-blue-600" />
         </div>
         <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Create Your Next Masterpiece
+          Write Your next blog
         </h2>
       </div>
 
@@ -166,7 +166,7 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onBlogCreated }) => {
             ) : (
               <div className="flex items-center space-x-2">
                 <PenTool className="h-4 w-4" />
-                <span>Publish Story</span>
+                <span>Publish Blog</span>
               </div>
             )}
           </Button>

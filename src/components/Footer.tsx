@@ -38,6 +38,13 @@ const Footer: React.FC = () => {
                         >
                             privacy@arijitkar.com
                         </a>
+                        <span className="hidden sm:inline">•</span>
+                        <a
+                            href="https://github.com/DemonicAK/bloggie"
+                            className="hover:text-blue-600 transition-colors duration-200 underline decoration-dotted underline-offset-2"
+                        >
+                            codebase 
+                        </a>
                     </div>
                 </div>
             </div>

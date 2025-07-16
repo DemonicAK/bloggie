@@ -1,14 +1,10 @@
 import { Metadata } from 'next';
 import { generateBlogMetadata, generateBlogJsonLd } from '@/lib/seo';
 import { getBlog, getUserById } from '@/lib/blogService';
-import { Blog, User } from '@/types';
+import { Blog, User, BlogPageProps } from '@/types';
 import BlogDetailClient from './BlogDetailClient';
 
-interface BlogPageProps {
-    params: Promise<{
-        id: string;
-    }>;
-}
+
 
 // Generate dynamic metadata for SEO
 export async function generateMetadata({ params }: BlogPageProps): Promise<Metadata> {
