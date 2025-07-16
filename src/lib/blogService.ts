@@ -621,11 +621,12 @@ export const checkUsernameExists = async (username: string): Promise<boolean> =>
   try {
     // console.log('Checking if username exists:', username); // test
     
-    const normalizedUsername = username.toLowerCase().trim();
+    const trimmedUsername = username.trim();
     
+    // Query for exact match (case-sensitive for now)
     const usersQuery = query(
       collection(db, 'users'),
-      where('username', '==', normalizedUsername),
+      where('username', '==', trimmedUsername),
       limit(1)
     );
     

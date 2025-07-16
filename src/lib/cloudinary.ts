@@ -44,7 +44,14 @@ export const validateImageFile = (file: File): string | null => {
   // Check file size (max 5MB)
   const maxSize = 5 * 1024 * 1024; // 5MB in bytes
   if (file.size > maxSize) {
-    return 'Image size must be less than 5MB';
+    const fileSizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+    return `Image size (${fileSizeInMB}MB) must be less than 5MB`;
+  }
+
+  // Check minimum file size (to avoid empty/corrupted files)
+  const minSize = 1024; // 1KB
+  if (file.size < minSize) {
+    return 'Image file appears to be corrupted or too small';
   }
 
   return null; // No errors

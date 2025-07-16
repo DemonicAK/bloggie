@@ -52,10 +52,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (userDoc.exists()) {
           const userData = userDoc.data() as User;
           // Ensure photoURL is available - fallback to Firebase Auth photoURL if not in Firestore
+
+          // Handle createdAt field safely
+          let createdAt: Date;
+          if (userData.createdAt instanceof Date) {
+            createdAt = userData.createdAt;
+          } else if (userData.createdAt && typeof userData.createdAt === 'object' && 'toDate' in userData.createdAt) {
+            // Handle Firestore Timestamp
+            createdAt = (userData.createdAt as any).toDate();
+          } else if (userData.createdAt) {
+            // Try to parse as string or number
+            const dateValue = new Date(userData.createdAt as any);
+            createdAt = isNaN(dateValue.getTime()) ? new Date() : dateValue;
+          } else {
+            // Fallback to current date
+            createdAt = new Date();
+          }
+
           const userWithPhoto = {
             ...userData,
             photoURL: userData.photoURL || firebaseUser.photoURL || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face&auto=format&q=80",
-            createdAt: userData.createdAt instanceof Date ? userData.createdAt : new Date(userData.createdAt)
+            createdAt: createdAt
           };
           setUser(userWithPhoto);
         } else {
@@ -93,12 +110,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (email: string, password: string, username: string, displayName: string, profilePhoto?: string) => {
     setLoading(true);
     try {
-      // Normalize username to lowercase and trim whitespace
-      // const normalizedUsername = username.toLowerCase().trim();
-      const normalizedUsername = username.trim();
+      // Trim username for checking and storage
+      const trimmedUsername = username.trim();
 
-      // Check if username already exists
-      const usernameExists = await checkUsernameExists(normalizedUsername);
+      // Check if username already exists (this is a safety check, UI should handle this)
+      const usernameExists = await checkUsernameExists(trimmedUsername);
       if (usernameExists) {
         throw new Error('Username is already taken. Please choose a different username.');
       }
@@ -111,11 +127,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         photoURL: profilePhoto,
       });
 
-      // Create user document in Firestore with both original and normalized username
+      // Create user document in Firestore
       const userData: User = {
         uid: firebaseUser.uid,
         email,
-        username: username, // Keep original format
+        username: trimmedUsername,
         displayName,
         photoURL: profilePhoto || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face&auto=format&q=80",
         createdAt: new Date(),
@@ -166,9 +182,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         // Existing user, load user data
         const userData = userDoc.data() as User;
+
+        // Handle createdAt field safely
+        let createdAt: Date;
+        if (userData.createdAt instanceof Date) {
+          createdAt = userData.createdAt;
+        } else if (userData.createdAt && typeof userData.createdAt === 'object' && 'toDate' in userData.createdAt) {
+          // Handle Firestore Timestamp
+          createdAt = (userData.createdAt as any).toDate();
+        } else if (userData.createdAt) {
+          // Try to parse as string or number
+          const dateValue = new Date(userData.createdAt as any);
+          createdAt = isNaN(dateValue.getTime()) ? new Date() : dateValue;
+        } else {
+          // Fallback to current date
+          createdAt = new Date();
+        }
+
         setUser({
           ...userData,
-          createdAt: userData.createdAt instanceof Date ? userData.createdAt : new Date(userData.createdAt)
+          createdAt: createdAt
         });
       }
     } catch (error) {
@@ -196,13 +229,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
 
-      // Update Firestore document
+      // Prepare the updated user data, ensuring dates are properly handled
       const updatedUserData = { ...user, ...updates };
-      await setDoc(doc(db, 'users', user.uid), updatedUserData);
 
-      // Update local state
-      setUser(updatedUserData);
+      // Ensure createdAt is a valid Date
+      let validCreatedAt: Date;
+      if (updatedUserData.createdAt instanceof Date && !isNaN(updatedUserData.createdAt.getTime())) {
+        validCreatedAt = updatedUserData.createdAt;
+      } else if (updatedUserData.createdAt && typeof updatedUserData.createdAt === 'object' && 'toDate' in updatedUserData.createdAt) {
+        // Handle Firestore Timestamp
+        validCreatedAt = (updatedUserData.createdAt as any).toDate();
+      } else {
+        // Fallback to current date if invalid
+        validCreatedAt = new Date();
+      }
+
+      // Prepare data for Firestore with proper date handling
+      const firestoreData = {
+        uid: updatedUserData.uid,
+        username: updatedUserData.username,
+        email: updatedUserData.email,
+        displayName: updatedUserData.displayName,
+        photoURL: updatedUserData.photoURL,
+        createdAt: validCreatedAt
+      };
+
+      // Update Firestore document
+      await setDoc(doc(db, 'users', user.uid), firestoreData);
+
+      // Update local state with the properly formatted data
+      const finalUserData = { ...updatedUserData, createdAt: validCreatedAt };
+      setUser(finalUserData);
     } catch (error) {
+      console.error('Error updating user profile:', error);
       setLoading(false);
       throw error;
     } finally {

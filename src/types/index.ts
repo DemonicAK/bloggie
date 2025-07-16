@@ -45,7 +45,7 @@ export interface UserFormData {
   password: string;
   username: string;
   displayName: string;
-  profileImage: string;
+  profileImage: string | File;
 }
 
 export interface AuthModalProps {
@@ -58,4 +58,9 @@ export interface AuthModalProps {
     params: Promise<{
         id: string;
     }>;
+}
+
+export interface ImageSelectorProps {
+    onImageSelect?: (file: File | null) => void;
+    className?: string;
 }

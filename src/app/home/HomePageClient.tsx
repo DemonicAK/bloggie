@@ -4,8 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import BlogCard from '@/components/BlogCard';
 import { getBlogs, getMostLikedBlogs } from '@/lib/blogService';
 import { Blog } from '@/types';
-import { TrendingUp, Clock, Loader2, Sparkles } from 'lucide-react';
-import { GradientBackground, FloatingCard } from '@/components/ui/animated';
+import { TrendingUp, Clock, Loader2, Heart, Coffee, BookOpen } from 'lucide-react';
 
 export default function HomePageClient() {
     const [latestBlogs, setLatestBlogs] = useState<Blog[]>([]);
@@ -65,46 +64,53 @@ export default function HomePageClient() {
     const displayedBlogs = activeTab === 'latest' ? latestBlogs : mostLikedBlogs;
 
     return (
-        <GradientBackground>
+        <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-red-50">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Welcome Section */}
                 <div className="text-center mb-12">
-                    <FloatingCard className="p-8 mb-8">
+                    <div className="bg-white rounded-2xl p-8 mb-8 shadow-lg border border-gray-100">
                         <div className="flex items-center justify-center mb-4">
-                            <Sparkles className="h-8 w-8 text-blue-600 mr-3" />
-                            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                                Welcome to Bloggie
+                            <div className="bg-amber-100 p-3 rounded-xl shadow-sm mr-3 rotate-3 hover:rotate-0 transition-transform duration-300">
+                                <Heart className="h-6 w-6 text-red-500" fill="currentColor" />
+                            </div>
+                            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+                                Stories from the Heart
                             </h1>
                         </div>
                         <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
-                            Discover amazing stories, share your thoughts, and connect with a community of passionate writers and readers.
+                            Welcome back! Dive into fresh stories from our community of authentic voices.
+                            Every story here comes from a real person with something meaningful to share.
                         </p>
-                    </FloatingCard>
+                        <div className="mt-4 text-sm text-gray-500 flex items-center justify-center gap-2">
+                            <Coffee className="h-4 w-4" />
+                            <span>Perfect reading with your morning coffee</span>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Tabs */}
                 <div className="flex justify-center mb-8">
-                    <div className="bg-white/70 backdrop-blur-sm rounded-xl p-1 shadow-lg border border-white/20">
+                    <div className="bg-white rounded-xl p-1 shadow-lg border border-gray-200">
                         <div className="flex space-x-1">
                             <button
                                 onClick={() => setActiveTab('latest')}
                                 className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === 'latest'
-                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105'
-                                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                                    ? 'bg-amber-500 text-white shadow-md'
+                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                                     }`}
                             >
                                 <Clock className="h-4 w-4 mr-2" />
-                                Latest Stories
+                                Fresh Stories
                             </button>
                             <button
                                 onClick={() => setActiveTab('popular')}
                                 className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === 'popular'
-                                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105'
-                                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                                    ? 'bg-amber-500 text-white shadow-md'
+                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                                     }`}
                             >
                                 <TrendingUp className="h-4 w-4 mr-2" />
-                                Popular Today
+                                Reader Favorites
                             </button>
                         </div>
                     </div>
@@ -113,28 +119,59 @@ export default function HomePageClient() {
                 {/* Blog Grid */}
                 {loading ? (
                     <div className="text-center py-12">
-                        <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-                        <p className="text-gray-600">Loading amazing stories...</p>
+                        <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
+                            <Loader2 className="h-8 w-8 animate-spin text-amber-500 mx-auto mb-4" />
+                            <p className="text-gray-600">Finding great stories for you...</p>
+                            <div className="mt-2 text-sm text-gray-400">
+                                ✨ Quality takes a moment
+                            </div>
+                        </div>
                     </div>
                 ) : (
                     <>
                         {displayedBlogs.length === 0 ? (
-                            <FloatingCard className="text-center py-12">
-                                <Sparkles className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                                <h3 className="text-xl font-semibold text-gray-700 mb-2">No stories yet</h3>
-                                <p className="text-gray-500">Be the first to share your amazing story!</p>
-                            </FloatingCard>
-                        ) : (
-                            <div className="grid gap-6 mb-8">
-                                {displayedBlogs.map((blog, index) => (
-                                    <FloatingCard key={blog.id} delay={index * 0.1}>
-                                        <BlogCard
-                                            blog={blog}
-                                            onUpdate={fetchInitialBlogs}
-                                        />
-                                    </FloatingCard>
-                                ))}
+                            <div className="bg-white rounded-2xl p-12 text-center shadow-lg border border-gray-100">
+                                <div className="bg-blue-50 p-4 rounded-xl inline-block mb-4">
+                                    <BookOpen className="h-12 w-12 text-blue-600" />
+                                </div>
+                                <h3 className="text-xl font-semibold text-gray-700 mb-3">No stories yet in this section</h3>
+                                <p className="text-gray-500 mb-4">
+                                    {activeTab === 'latest'
+                                        ? "Be the first to share your story with our community!"
+                                        : "Stories need time to gain popularity. Check back soon!"}
+                                </p>
+                                <div className="text-sm text-gray-400">
+                                    📝 Every great story starts with a single word
+                                </div>
                             </div>
+                        ) : (
+                            <>
+                                {/* Story count and encouragement */}
+                                <div className="text-center mb-6">
+                                    <div className="inline-flex items-center bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-medium">
+                                        <Heart className="h-4 w-4 mr-1" fill="currentColor" />
+                                        {displayedBlogs.length} {activeTab === 'latest' ? 'fresh' : 'beloved'} stories waiting for you
+                                    </div>
+                                </div>
+
+                                <div className="grid gap-6 mb-8">
+                                    {displayedBlogs.map((blog, index) => (
+                                        <div
+                                            key={blog.id}
+                                            className="bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 overflow-hidden"
+                                            style={{
+                                                animationDelay: `${index * 0.1}s`,
+                                                animation: 'fadeInUp 0.6s ease-out forwards'
+                                            }}
+                                        >
+                                            <BlogCard
+                                                blog={blog}
+                                                onUpdate={fetchInitialBlogs}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
                         )}
 
                         {/* Load More Button */}
@@ -143,22 +180,38 @@ export default function HomePageClient() {
                                 <button
                                     onClick={loadMoreBlogs}
                                     disabled={loadingMore}
-                                    className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                                    className="px-8 py-4 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {loadingMore ? (
                                         <>
                                             <Loader2 className="h-4 w-4 animate-spin mr-2 inline" />
-                                            Loading more...
+                                            Finding more stories...
                                         </>
                                     ) : (
-                                        'Load More Stories'
+                                        'More Stories Please ✨'
                                     )}
                                 </button>
+                                <div className="mt-3 text-sm text-gray-500">
+                                    There's always another great story to discover
+                                </div>
                             </div>
                         )}
                     </>
                 )}
             </div>
-        </GradientBackground>
+
+            <style jsx>{`
+                @keyframes fadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+            `}</style>
+        </div>
     );
 }
