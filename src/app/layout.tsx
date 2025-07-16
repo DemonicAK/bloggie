@@ -50,9 +50,6 @@ export default function RootLayout({
         {performanceConfig.dns.map((dns, index) => (
           <link key={`dns-${index}`} {...dns} />
         ))}
-        {performanceConfig.preload.map((preload, index) => (
-          <link key={`preload-${index}`} {...preload} />
-        ))}
         {performanceConfig.prefetch.map((prefetch, index) => (
           <link key={`prefetch-${index}`} {...prefetch} />
         ))}
