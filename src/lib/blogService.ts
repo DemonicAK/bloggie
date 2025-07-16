@@ -34,7 +34,7 @@ import { Blog, CreateBlogData, CreateCommentData, User } from '@/types';
 const convertFirestoreDocToBlog = (firestoreDoc: QueryDocumentSnapshot<DocumentData>): Blog => {
   const docData = firestoreDoc.data();
   
-  // console.log('Converting Firestore doc to Blog:', firestoreDoc.id); // Debug
+  // console.log('Converting Firestore doc to Blog:', firestoreDoc.id); // test
   
   return {
     id: firestoreDoc.id,
@@ -64,7 +64,7 @@ const convertFirestoreDocToBlog = (firestoreDoc: QueryDocumentSnapshot<DocumentD
 // Helper function to get user data by ID - used throughout the app
 export const getUserById = async (userId: string): Promise<User | null> => {
   try {
-    // console.log('Fetching user by ID:', userId); // Debug
+    // console.log('Fetching user by ID:', userId); // test
     const userDoc = await getDoc(doc(db, 'users', userId));
     if (userDoc.exists()) {
       const userData = userDoc.data();
@@ -104,7 +104,7 @@ export const getUsersByIds = async (userIds: string[]): Promise<Record<string, U
 // Create a new blog post
 export const createNewBlogPost = async (blogData: CreateBlogData, authorUserId: string): Promise<string> => {
   try {
-    // console.log('Creating new blog post for user:', authorUserId); // Debug
+    // console.log('Creating new blog post for user:', authorUserId); // test
     
     // First, let's get the author's information
     const authorDocRef = doc(db, 'users', authorUserId);
@@ -133,12 +133,12 @@ export const createNewBlogPost = async (blogData: CreateBlogData, authorUserId: 
       tags: (blogData as CreateBlogData & { tags?: string[] }).tags || ['programming', 'tech'],
     };
     
-    // console.log('Prepared blog data:', newBlogData); // Debug
+    // console.log('Prepared blog data:', newBlogData); // test
     
     // Add the document to Firestore
     const blogDocRef = await addDoc(collection(db, 'blogs'), newBlogData);
     
-    // console.log('Blog created successfully with ID:', blogDocRef.id); // Debug
+    // console.log('Blog created successfully with ID:', blogDocRef.id); // test
     
     return blogDocRef.id;
   } catch (error) {
@@ -150,7 +150,7 @@ export const createNewBlogPost = async (blogData: CreateBlogData, authorUserId: 
 // Get a single blog post by ID
 export const getBlogPostById = async (blogId: string): Promise<Blog | null> => {
   try {
-    // console.log('Fetching blog with ID:', blogId); // Debug
+    // console.log('Fetching blog with ID:', blogId); // test
     
     const blogDocRef = doc(db, 'blogs', blogId);
     const blogSnapshot = await getDoc(blogDocRef);
@@ -182,7 +182,7 @@ export const getAllBlogPosts = async (
   lastDocumentId?: string
 ): Promise<{ blogs: Blog[]; hasMore: boolean; lastDoc?: string }> => {
   try {
-    // console.log('Fetching blogs with limit:', limitCount, 'lastDoc:', lastDocumentId); // Debug
+    // console.log('Fetching blogs with limit:', limitCount, 'lastDoc:', lastDocumentId); // test
     
     const blogsCollectionRef = collection(db, 'blogs');
     let blogsQuery = query(
@@ -255,7 +255,7 @@ export const getBlogsByAuthor = async (authorUsername: string, limitCount: numbe
 
 export const getMostPopularBlogs = async (limitCount: number = 2): Promise<Blog[]> => {
   try {
-    // console.log('Fetching most popular blogs'); // Debug
+    // console.log('Fetching most popular blogs'); // test
     
     const blogsQuery = query(
       collection(db, 'blogs'),
@@ -272,7 +272,7 @@ export const getMostPopularBlogs = async (limitCount: number = 2): Promise<Blog[
       .sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0))
       .slice(0, limitCount);
     
-    // console.log(`Found ${popularBlogs.length} popular blogs`); // Debug
+    // console.log(`Found ${popularBlogs.length} popular blogs`); // test
     
     return popularBlogs;
   } catch (error) {
@@ -284,7 +284,7 @@ export const getMostPopularBlogs = async (limitCount: number = 2): Promise<Blog[
 // Get all blogs by a specific user
 export const getUserOwnBlogs = async (userId: string): Promise<Blog[]> => {
   try {
-    // console.log('Fetching blogs for user:', userId); // Debug
+    // console.log('Fetching blogs for user:', userId); // test
     
     const userBlogsQuery = query(
       collection(db, 'blogs'),
@@ -295,7 +295,7 @@ export const getUserOwnBlogs = async (userId: string): Promise<Blog[]> => {
     const querySnapshot = await getDocs(userBlogsQuery);
     const userBlogs = querySnapshot.docs.map(convertFirestoreDocToBlog);
     
-    // console.log(`Found ${userBlogs.length} blogs for user ${userId}`); // Debug
+    // console.log(`Found ${userBlogs.length} blogs for user ${userId}`); // test
     
     return userBlogs;
   } catch (error) {
@@ -384,7 +384,7 @@ export const deleteBlog = async (blogId: string): Promise<void> => {
 // Toggle like on a blog post
 export const toggleBlogLike = async (blogId: string, userId: string): Promise<void> => {
   try {
-    // console.log('Toggling like for blog:', blogId, 'by user:', userId); // Debug
+    // console.log('Toggling like for blog:', blogId, 'by user:', userId); // test
     
     const blogDocRef = doc(db, 'blogs', blogId);
     const blogSnapshot = await getDoc(blogDocRef);
@@ -402,13 +402,13 @@ export const toggleBlogLike = async (blogId: string, userId: string): Promise<vo
       await updateDoc(blogDocRef, {
         likes: arrayRemove(userId)
       });
-      // console.log('Like removed'); // Debug
+      // console.log('Like removed'); // test
     } else {
       // Add like
       await updateDoc(blogDocRef, {
         likes: arrayUnion(userId)
       });
-      // console.log('Like added'); // Debug
+      // console.log('Like added'); // test
     }
   } catch (error) {
     console.error('Error toggling like:', error);
@@ -419,7 +419,7 @@ export const toggleBlogLike = async (blogId: string, userId: string): Promise<vo
 // Toggle bookmark on a blog post
 export const toggleBlogBookmark = async (blogId: string, userId: string): Promise<void> => {
   try {
-    // console.log('Toggling bookmark for blog:', blogId, 'by user:', userId); // Debug
+    // console.log('Toggling bookmark for blog:', blogId, 'by user:', userId); // test
     
     const blogDocRef = doc(db, 'blogs', blogId);
     const blogSnapshot = await getDoc(blogDocRef);
@@ -437,13 +437,13 @@ export const toggleBlogBookmark = async (blogId: string, userId: string): Promis
       await updateDoc(blogDocRef, {
         bookmarks: arrayRemove(userId)
       });
-      // console.log('Bookmark removed'); // Debug
+      // console.log('Bookmark removed'); // test
     } else {
       // Add bookmark
       await updateDoc(blogDocRef, {
         bookmarks: arrayUnion(userId)
       });
-      // console.log('Bookmark added'); // Debug
+      // console.log('Bookmark added'); // test
     }
   } catch (error) {
     console.error('Error toggling bookmark:', error);
@@ -454,7 +454,7 @@ export const toggleBlogBookmark = async (blogId: string, userId: string): Promis
 // Add a comment to a blog post
 export const addCommentToBlog = async (blogId: string, commenterUserId: string, commentContent: CreateCommentData): Promise<void> => {
   try {
-    // console.log('Adding comment to blog:', blogId, 'by user:', commenterUserId); // Debug
+    // console.log('Adding comment to blog:', blogId, 'by user:', commenterUserId); // test
     
     // Get the commenter's information first
     const commenterDocRef = doc(db, 'users', commenterUserId);
@@ -478,7 +478,7 @@ export const addCommentToBlog = async (blogId: string, commenterUserId: string, 
       likes: [] // Start with empty likes array
     };
     
-    // console.log('Prepared comment data:', newComment); // Debug
+    // console.log('Prepared comment data:', newComment); // test
     
     // Add the comment to the blog's comments array
     const blogDocRef = doc(db, 'blogs', blogId);
@@ -486,7 +486,7 @@ export const addCommentToBlog = async (blogId: string, commenterUserId: string, 
       comments: arrayUnion(newComment)
     });
     
-    // console.log('Comment added successfully'); // Debug
+    // console.log('Comment added successfully'); // test
   } catch (error) {
     console.error('Error adding comment:', error);
     throw new Error(`Failed to add comment: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -498,7 +498,7 @@ export const checkUsernameValidity = (username: string): { isValid: boolean; err
   const validationErrors: string[] = [];
   const cleanUsername = username.toLowerCase().trim();
 
-  // console.log('Validating username:', cleanUsername); // Debug
+  // console.log('Validating username:', cleanUsername); // test
 
   if (!cleanUsername) {
     validationErrors.push('Username is required');
@@ -535,7 +535,7 @@ export const checkUsernameValidity = (username: string): { isValid: boolean; err
 
   const isUsernameValid = validationErrors.length === 0;
   
-  // console.log('Username validation result:', { isValid: isUsernameValid, errors: validationErrors }); // Debug
+  // console.log('Username validation result:', { isValid: isUsernameValid, errors: validationErrors }); // test
   
   return {
     isValid: isUsernameValid,
@@ -546,7 +546,7 @@ export const checkUsernameValidity = (username: string): { isValid: boolean; err
 // Search blogs by content (simple text search - could be enhanced with full-text search)
 export const searchBlogsByKeyword = async (searchKeyword: string, limitCount: number = 10): Promise<Blog[]> => {
   try {
-    // console.log('Searching blogs with keyword:', searchKeyword); // Debug
+    // console.log('Searching blogs with keyword:', searchKeyword); // test
     
     if (!searchKeyword.trim()) {
       return [];
@@ -576,7 +576,7 @@ export const searchBlogsByKeyword = async (searchKeyword: string, limitCount: nu
       (blog as Blog & { tags?: string[] }).tags?.some((tag: string) => tag.toLowerCase().includes(searchLowerCase))
     );
     
-    // console.log(`Found ${matchingBlogs.length} blogs matching "${searchKeyword}"`); // Debug
+    // console.log(`Found ${matchingBlogs.length} blogs matching "${searchKeyword}"`); // test
     
     return matchingBlogs.slice(0, limitCount);
   } catch (error) {
@@ -619,7 +619,7 @@ export const validateUsername = (username: string): { isValid: boolean; errors: 
 // Check if username already exists in the database
 export const checkUsernameExists = async (username: string): Promise<boolean> => {
   try {
-    // console.log('Checking if username exists:', username); // Debug
+    // console.log('Checking if username exists:', username); // test
     
     const normalizedUsername = username.toLowerCase().trim();
     
@@ -632,7 +632,7 @@ export const checkUsernameExists = async (username: string): Promise<boolean> =>
     const querySnapshot = await getDocs(usersQuery);
     const usernameExists = !querySnapshot.empty;
     
-    // console.log('Username exists result:', usernameExists); // Debug
+    // console.log('Username exists result:', usernameExists); // test
     
     return usernameExists;
   } catch (error) {
@@ -676,4 +676,4 @@ export const getBlogs = getAllBlogPosts;
 export const getUserBlogs = getUserOwnBlogs;
 export const getMostLikedBlogs = getMostPopularBlogs;
 
-// console.log('Blog service loaded successfully'); // Debug
+// console.log('Blog service loaded successfully'); // test

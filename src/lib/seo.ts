@@ -1,8 +1,5 @@
 /**
  * SEO Utilities and Configurations
- * 
- * I spent a lot of time researching competitor keywords and SEO strategies
- * TODO: Add more social media platforms (LinkedIn, Facebook, etc.)
  */
 
 import { Metadata } from 'next';
@@ -18,7 +15,7 @@ export const mainSEOSettings = {
   websiteType: 'website',
 };
 
-// console.log('SEO Config loaded:', mainSEOSettings); // Debug: Check config values
+// console.log('SEO Config loaded:', mainSEOSettings); // test: Check config values
 
 // Target keywords for technical blogs - researched from competitor analysis
 // These keywords are what developers actually search for (based on my research)
@@ -47,7 +44,7 @@ export const primaryKeywords = [
 
 // Generate comprehensive metadata for individual blog posts
 export function generateBlogMetadata(blogPost: Blog, blogAuthor?: User): Metadata {
-  // console.log('Generating metadata for blog:', blogPost.title); // Debug
+  // console.log('Generating metadata for blog:', blogPost.title); // test
   
   const pageTitle = `${blogPost.title} | Bloggie - Technical Blog Platform`;
   const pageDescription = generateMetaDescription(blogPost.content);
@@ -135,7 +132,7 @@ export function generateHomeMetadata(): Metadata {
   const homeTitle = 'Bloggie - Best Technical Blog Platform for Developers | Compete with Medium';
   const homeDescription = 'Join the fastest-growing technical blog platform for developers. Share programming tutorials, software engineering insights, and technical articles. Better than Medium for developers.';
   
-  // console.log('Generating home page metadata'); // Debug
+  // console.log('Generating home page metadata'); // test
   
   return {
     title: homeTitle,
@@ -225,7 +222,7 @@ export function generateUserMetadata(userProfile: User): Metadata {
 
 // Create SEO-optimized meta description from blog content
 function generateMetaDescription(blogContent: string): string {
-  // console.log('Creating meta description from content'); // Debug
+  // console.log('Creating meta description from content'); // test
   
   // Remove HTML tags and normalize whitespace
   const cleanedContent = blogContent.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
@@ -247,7 +244,7 @@ function generateMetaDescription(blogContent: string): string {
 
 // Extract relevant keywords from blog content using simple algorithm
 function extractKeywords(blogContent: string): string[] {
-  // console.log('Extracting keywords from content'); // Debug
+  // console.log('Extracting keywords from content'); // test
   
   // Simple keyword extraction - could be improved with NLP libraries
   const technicalTerms = [
@@ -263,21 +260,19 @@ function extractKeywords(blogContent: string): string[] {
     lowerCaseContent.includes(term.toLowerCase())
   );
   
-  // console.log('Found keywords:', foundKeywords); // Debug
+  // console.log('Found keywords:', foundKeywords); // test
   return foundKeywords.slice(0, 10); // Limit to top 10 keywords
 }
 
 // Generate dynamic Open Graph image URL (placeholder for now)
 function generateOGImage(blogPost: Blog): string {
-  // TODO: Implement actual dynamic image generation
-  // For now, return a placeholder with the blog title
   const encodedTitle = encodeURIComponent(blogPost.title);
   return `${baseSEOConfig.siteUrl}/api/og?title=${encodedTitle}`;
 }
 
 // Generate structured data (JSON-LD) for blog posts
 export function generateBlogJsonLd(blogPost: Blog, postAuthor?: User) {
-  // console.log('Creating structured data for:', blogPost.title); // Debug
+  // console.log('Creating structured data for:', blogPost.title); // test
   
   return {
     '@context': 'https://schema.org',
@@ -365,9 +360,6 @@ export const webPerformanceSettings = {
     '/fonts/inter-var.woff2', // Preload critical fonts
     '/logo.png', // Preload logo
   ],
-  prefetch: [
-    '/api/blogs', // Prefetch common API endpoints
-  ],
   // Critical CSS should be inlined
   criticalCSS: true,
   // Image optimization settings
@@ -379,10 +371,6 @@ export const webPerformanceSettings = {
 };
 
 export const performanceConfig = {
-  preload: [
-    { rel: 'preload', href: '/fonts/geist.woff2', as: 'font', type: 'font/woff2', crossOrigin: 'anonymous' as const },
-    { rel: 'preload', href: '/api/blogs', as: 'fetch', crossOrigin: 'anonymous' as const },
-  ],
   prefetch: [
     { rel: 'prefetch', href: '/dashboard' },
     { rel: 'prefetch', href: '/home' },
@@ -405,4 +393,4 @@ export const baseSEOConfig = {
   type: mainSEOSettings.websiteType,
 };
 
-// console.log('SEO utilities loaded successfully'); // Debug
+// console.log('SEO utilities loaded successfully'); // test

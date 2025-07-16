@@ -1,19 +1,12 @@
 /** @type {import('next').NextConfig} */
-// Next.js configuration for our awesome blogging platform
-// TODO: Add more experimental features when they become stable
-// FIXME: Some packages might need optimization later
 const bloggieSiteConfig = {
-  // Enable experimental features for better performance - tested these myself
   experimental: {
     optimizePackageImports: ['lucide-react', '@heroicons/react'],
-    // serverComponentsExternalPackages: ['mongoose'], // Uncomment if we use MongoDB later
+    
   },
   
-  // External packages that should run on server only
-  // Firebase admin needs to stay on server side for security
   serverExternalPackages: ['firebase-admin'],
 
-  // Image optimization configuration - researched best practices
   images: {
     // Allow images from these trusted domains
     remotePatterns: [
@@ -34,18 +27,18 @@ const bloggieSiteConfig = {
         hostname: 'res.cloudinary.com', // Cloudinary for image uploads
       },
     ],
-    // Modern image formats for better performance
+    // Modern image formats 
     formats: ['image/avif', 'image/webp'],
-    // Cache images for 1 year - aggressive caching for better UX
+    // Cache images for 1 year 
     minimumCacheTTL: 31536000, // 1 year in seconds
-    // Allow SVG but with strict CSP for security
+    // Allow SVG 
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 
-  // Compiler optimizations - remove console.log in production for cleaner code
+
   compiler: {
-    // console.log('NODE_ENV:', process.env.NODE_ENV); // Debug: Check environment
+    // console.log('NODE_ENV:', process.env.NODE_ENV); 
     removeConsole: process.env.NODE_ENV === 'production',
   },
 

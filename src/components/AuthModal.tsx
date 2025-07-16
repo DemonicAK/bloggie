@@ -41,12 +41,12 @@ const AuthModal: React.FC<AuthModalProps> = ({
 
   // Function to validate username availability
   const checkUsernameAvailability = useCallback(async (usernameToCheck: string) => {
-    // console.log('Checking username availability:', usernameToCheck); // Debug
+    // console.log('Checking username availability:', usernameToCheck); // test
     setIsCheckingUsername(true);
     try {
       const usernameExists = await checkUsernameExists(usernameToCheck);
       setIsUsernameAvailable(!usernameExists);
-      // console.log('Username check result:', !usernameExists); // Debug
+      // console.log('Username check result:', !usernameExists); // test
     } catch (error) {
       console.error('Error checking username availability:', error);
       setIsUsernameAvailable(null);
@@ -136,10 +136,10 @@ const AuthModal: React.FC<AuthModalProps> = ({
 
     try {
       if (isLoginMode) {
-        // console.log('Attempting login...'); // Debug
+        // console.log('Attempting login...'); // test
         await login(userFormData.email, userFormData.password);
       } else {
-        // console.log('Attempting registration...'); // Debug
+        // console.log('Attempting registration...'); // test
         await register(
           userFormData.email,
           userFormData.password,
@@ -148,7 +148,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
           userFormData.profileImage
         );
       }
-      // console.log('Authentication successful'); // Debug
+      // console.log('Authentication successful'); // test
       onClose();
     } catch (error: unknown) {
       console.error('Authentication error:', error);

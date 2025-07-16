@@ -6,7 +6,7 @@ import { mainSEOSettings } from '@/lib/seo';
 export default function robots(): MetadataRoute.Robots {
   const baseUrl = mainSEOSettings.websiteUrl;
   
-  // console.log('Generating robots.txt for:', baseUrl); // Debug
+  // console.log('Generating robots.txt for:', baseUrl); // test
 
   return {
     rules: [

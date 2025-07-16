@@ -14,7 +14,7 @@ interface SEOEnhancementProps {
     keywords?: string;
     structuredData?: object;
     canonicalUrl?: string;
-    noIndex?: boolean; 
+    noIndex?: boolean;
 }
 
 export default function SEOEnhancer({
@@ -28,12 +28,12 @@ export default function SEOEnhancer({
     const currentPath = usePathname();
 
     useEffect(() => {
-        // console.log('SEO Enhancer running for path:', currentPath); // Debug
+        // console.log('SEO Enhancer running for path:', currentPath); // test
 
         // Update page title dynamically if provided
         if (title) {
             document.title = title;
-            // console.log('Updated page title to:', title); // Debug
+            // console.log('Updated page title to:', title); // test
         }
 
         // Update or create meta description
@@ -44,7 +44,7 @@ export default function SEOEnhancer({
                 metaDescriptionTag = document.createElement('meta');
                 metaDescriptionTag.setAttribute('name', 'description');
                 document.head.appendChild(metaDescriptionTag);
-                // console.log('Created new meta description tag'); // Debug
+                // console.log('Created new meta description tag'); // test
             }
             metaDescriptionTag.setAttribute('content', description);
         }
@@ -56,7 +56,7 @@ export default function SEOEnhancer({
                 metaKeywordsTag = document.createElement('meta');
                 metaKeywordsTag.setAttribute('name', 'keywords');
                 document.head.appendChild(metaKeywordsTag);
-                // console.log('Created new meta keywords tag'); // Debug
+                // console.log('Created new meta keywords tag'); // test
             }
             metaKeywordsTag.setAttribute('content', keywords);
         }
@@ -68,7 +68,7 @@ export default function SEOEnhancer({
                 canonicalLinkTag = document.createElement('link');
                 canonicalLinkTag.setAttribute('rel', 'canonical');
                 document.head.appendChild(canonicalLinkTag);
-                // console.log('Created new canonical link tag'); // Debug
+                // console.log('Created new canonical link tag'); // test
             }
             canonicalLinkTag.setAttribute('href', canonicalUrl);
         }
@@ -82,7 +82,7 @@ export default function SEOEnhancer({
                 document.head.appendChild(robotsMetaTag);
             }
             robotsMetaTag.setAttribute('content', 'noindex, nofollow');
-            // console.log('Set page to noindex'); // Debug
+            // console.log('Set page to noindex'); // test
         }
 
         // Add or update structured data (JSON-LD)
@@ -96,18 +96,18 @@ export default function SEOEnhancer({
             const existingStructuredData = document.getElementById('dynamic-structured-data');
             if (existingStructuredData) {
                 document.head.removeChild(existingStructuredData);
-                // console.log('Removed existing structured data'); // Debug
+                // console.log('Removed existing structured data'); // test
             }
 
             document.head.appendChild(structuredDataScript);
-            // console.log('Added structured data:', structuredData); // Debug
+            // console.log('Added structured data:', structuredData); // test
 
             // Cleanup function to remove structured data when component unmounts
             return () => {
                 const currentStructuredDataScript = document.getElementById('dynamic-structured-data');
                 if (currentStructuredDataScript) {
                     document.head.removeChild(currentStructuredDataScript);
-                    // console.log('Cleaned up structured data on unmount'); // Debug
+                    // console.log('Cleaned up structured data on unmount'); // test
                 }
             };
         }
@@ -118,7 +118,7 @@ export default function SEOEnhancer({
             viewportMetaTag.setAttribute('name', 'viewport');
             viewportMetaTag.setAttribute('content', 'width=device-width, initial-scale=1');
             document.head.appendChild(viewportMetaTag);
-            // console.log('Added viewport meta tag'); // Debug
+            // console.log('Added viewport meta tag'); // test
         }
 
         // Add charset meta tag if it doesn't exist
@@ -126,7 +126,7 @@ export default function SEOEnhancer({
             const charsetMetaTag = document.createElement('meta');
             charsetMetaTag.setAttribute('charset', 'UTF-8');
             document.head.insertBefore(charsetMetaTag, document.head.firstChild);
-            // console.log('Added charset meta tag'); // Debug
+            // console.log('Added charset meta tag'); // test
         }
 
     }, [title, description, keywords, structuredData, currentPath, canonicalUrl, noIndex]);
@@ -141,7 +141,7 @@ export default function SEOEnhancer({
  */
 export function useSEOUpdate() {
     const updatePageSEO = (seoData: Partial<SEOEnhancementProps>) => {
-        // console.log('Updating SEO with data:', seoData); // Debug
+        // console.log('Updating SEO with data:', seoData); // test
 
         if (seoData.title) {
             document.title = seoData.title;
