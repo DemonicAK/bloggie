@@ -138,8 +138,11 @@ export default function HomePageClient() {
                                             key={blog.id}
                                             className="bg-card rounded-xl shadow-lg border border-border hover:shadow-xl transition-all duration-300 overflow-hidden"
                                             style={{
+                                                animationName: 'fadeInUp',
+                                                animationDuration: '0.6s',
+                                                animationTimingFunction: 'ease-out',
+                                                animationFillMode: 'forwards',
                                                 animationDelay: `${index * 0.1}s`,
-                                                animation: 'fadeInUp 0.6s ease-out forwards'
                                             }}
                                         >
                                             <BlogCard

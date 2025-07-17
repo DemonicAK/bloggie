@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import HomePageClient from './HomePageClient';
+import HomePageClient from './HomePageClient2';
 
 // SEO metadata for home page
 export const metadata: Metadata = {

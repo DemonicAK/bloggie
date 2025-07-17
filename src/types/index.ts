@@ -27,6 +27,7 @@ export interface Comment {
   authorUsername: string;
   content: string;
   createdAt: Date;
+  photoURL?: string; // Optional photo URL for the comment author
   likes: string[]; // Array of user IDs who liked the comment
 }
 

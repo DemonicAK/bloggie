@@ -35,9 +35,9 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onBlogCreated }) => {
 
     if (!formData.title.trim()) {
       newErrors.push('Title is required');
-    } else if (formData.title.length < 5) {
-      newErrors.push('Title must be at least 5 characters');
-    } else if (formData.title.length > 100) {
+    } else if (formData.title.length < 2) {
+      newErrors.push('Title must be at least 2 characters');
+    } else if (formData.title.length <100) {
       newErrors.push('Title must be less than 100 characters');
     }
 
@@ -84,7 +84,7 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onBlogCreated }) => {
 
   if (!user) {
     return (
-      <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+      <div className=" backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
         <div className="text-center py-8">
           <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <PenTool className="h-8 w-8 text-blue-600" />
@@ -97,7 +97,7 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onBlogCreated }) => {
   }
 
   return (
-    <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+    <div className=" backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
       <div className="flex items-center space-x-3 mb-8">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur-sm opacity-30"></div>

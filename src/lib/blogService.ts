@@ -473,6 +473,7 @@ export const addCommentToBlog = async (blogId: string, commenterUserId: string, 
       authorId: commenterUserId,
       authorUsername: commenterData.username,
       authorDisplayName: commenterData.displayName,
+      photoURL: commenterData.photoURL || '',
       content: commentContent.content,
       createdAt: Timestamp.now(), // Use Timestamp.now() for consistency
       likes: [] // Start with empty likes array

@@ -18,6 +18,8 @@ import { uploadToCloudinary, validateImageFile } from '@/lib/cloudinary';
 
 import { UserFormData, AuthModalProps } from '@/types';
 import ImageSelector from './ImageSelector';
+import { Router } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
@@ -39,7 +41,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
   const [isSubmittingForm, setIsSubmittingForm] = useState<boolean>(false);
   const [isUsernameAvailable, setIsUsernameAvailable] = useState<boolean | null>(null);
   const [isCheckingUsername, setIsCheckingUsername] = useState<boolean>(false);
-
+  const router = useRouter();
   // Get authentication methods from context
   const { login, register, loginWithGoogle } = useAuth();
 
@@ -250,6 +252,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
         );
       }
       // console.log('Authentication successful'); // test
+      router.push('/'); // Redirect to home page after successful auth
       onClose();
     } catch (error: unknown) {
       console.error('Authentication error:', error);
@@ -303,6 +306,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
 
     try {
       await loginWithGoogle();
+      router.push('/'); // Redirect to home page after successful auth
       onClose();
     } catch (error: unknown) {
       console.error('Google authentication error:', error);

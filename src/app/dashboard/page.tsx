@@ -59,7 +59,7 @@ export default function Dashboard() {
     }
 
     return (
-        <GradientBackground>
+        <div className="min-h-screen bg-background text-foreground">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8 text-center">
@@ -81,7 +81,7 @@ export default function Dashboard() {
                             <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur-sm opacity-30"></div>
                             <BookOpen className="relative h-6 w-6 text-blue-600" />
                         </div>
-                        <h2 className="text-2xl font-bold text-slate-900">Your Blog Collection</h2>
+                        <h2 className="text-2xl font-bold text-foreground">Your Blog Collection</h2>
                         <span className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
                             {userBlogs.length} {userBlogs.length === 1 ? 'story' : 'stories'}
                         </span>
@@ -104,19 +104,27 @@ export default function Dashboard() {
                             </p>
                         </FloatingCard>
                     ) : (
-                        <div className="space-y-6">
-                            {userBlogs.map((blog, index) => (
-                                <FloatingCard key={blog.id} delay={index * 0.1}>
-                                    <BlogCard
-                                        blog={blog}
-                                        onUpdate={fetchUserBlogs}
-                                    />
-                                </FloatingCard>
-                            ))}
-                        </div>
+                                <>
+                                    <div className="grid gap-6 md:gap-8">
+                                        {userBlogs.map((blog, index) => (
+                                            <div
+                                                key={blog.id}
+                                                className="bg-card rounded-2xl shadow-lg border border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                                                style={{
+                                                    animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`
+                                                }}
+                                            >
+                                                <BlogCard
+                                                    blog={blog}
+                                                    onUpdate={fetchUserBlogs}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
                     )}
                 </div>
             </div>
-        </GradientBackground>
+        </div>
     );
 }

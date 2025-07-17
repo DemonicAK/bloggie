@@ -66,24 +66,10 @@ export default function HomePageClient() {
     return (
         <div className="min-h-screen bg-background">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Hero Section */}
-                <div className="text-center mb-12">
-                    <div className="inline-flex items-center justify-center mb-6">
-                        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-2xl shadow-lg">
-                            <Terminal className="h-10 w-10 text-white" />
-                        </div>
-                    </div>
-                    <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-                        Welcome to TechBlog
-                    </h1>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-                        Discover the latest programming tutorials, software engineering insights, and tech innovations from our community of developers.
-                    </p>
-                </div>
 
                 {/* Tab Navigation */}
                 <div className="flex justify-center mb-8">
-                    <div className="bg-card rounded-xl p-1 shadow-lg border border-border">
+                    <div className="bg-card rounded-xl p-1 shadow-lg border border-border flex">
                         <button
                             onClick={() => setActiveTab('latest')}
                             className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === 'latest'

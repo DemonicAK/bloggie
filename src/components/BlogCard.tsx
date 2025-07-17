@@ -74,7 +74,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ blog, onUpdate }) => {
   };
 
   return (
-    <div className="group p-6">
+    <div className="group p-6 ">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <Link
@@ -95,7 +95,7 @@ const BlogCard: React.FC<BlogCardProps> = ({ blog, onUpdate }) => {
             </div>
           )}
           <div>
-            <p className="font-semibold text-slate-900">{blog.authorUsername}</p>
+            <p className="font-semibold text-foreground">{blog.authorUsername}</p>
             <div className="flex items-center text-sm text-slate-500">
               <Calendar className="h-3 w-3 mr-1" />
               {formatDistance(blog.createdAt, new Date(), { addSuffix: true })}
@@ -106,10 +106,10 @@ const BlogCard: React.FC<BlogCardProps> = ({ blog, onUpdate }) => {
 
       {/* Content */}
       <Link href={`/blog/${blog.id}`} className="block group/content">
-        <h2 className="text-xl font-bold text-slate-900 mb-3 group-hover/content:bg-gradient-to-r group-hover/content:from-blue-600 group-hover/content:to-purple-600 group-hover/content:bg-clip-text group-hover/content:text-transparent transition-all duration-300 leading-tight">
+        <h2 className="text-xl font-bold text-foreground mb-3 group-hover/content:bg-gradient-to-r group-hover/content:from-blue-600 group-hover/content:to-purple-600 group-hover/content:bg-clip-text group-hover/content:text-transparent transition-all duration-300 leading-tight">
           {blog.title}
         </h2>
-        <p className="text-slate-600 mb-4 leading-relaxed">
+        <p className="text-foreground mb-4 leading-relaxed">
           {truncateContent(blog.content)}
         </p>
         <div className="flex items-center text-blue-600 font-medium text-sm group-hover/content:translate-x-1 transition-transform duration-300">

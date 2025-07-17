@@ -46,6 +46,7 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
         setLoading(true);
         try {
             const blogData = await getBlog(blogId);
+
             setBlog(blogData);
 
             if (blogData && !authorData) {
@@ -57,6 +58,8 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
             if (blogData && blogData.comments.length > 0) {
                 // Fetch comment authors
                 const commentAuthorIds = [...new Set(blogData.comments.map(comment => comment.authorId))];
+                console.log("commentAuthorIds", commentAuthorIds);
+                console.log("commentAuthorIds length", commentAuthorIds.length);
                 const authors = await getUsersByIds(commentAuthorIds);
                 const authorsMap = Array.isArray(authors)
                     ? authors.reduce((acc: Record<string, User>, author: User | null) => {
@@ -65,6 +68,9 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
                     }, {} as Record<string, User>)
                     : {};
                 setCommentAuthors(authorsMap);
+                console.log("authorsMap", authors);
+                // For debugging purposes
+                console.log("commentAuthors", authorsMap);
             }
         } catch (error) {
             console.error('Error fetching blog:', error);
@@ -73,25 +79,26 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
         }
     }, [blogId, authorData]);
 
-    useEffect(() => {
-        if (!initialBlog) {
-            fetchBlog();
-        } else if (blog && blog.comments.length > 0 && Object.keys(commentAuthors).length === 0) {
-            // Fetch comment authors for initial blog
-            const commentAuthorIds = [...new Set(blog.comments.map(comment => comment.authorId))];
-            getUsersByIds(commentAuthorIds).then(authors => {
-                const authorsMap = Array.isArray(authors)
-                    ? authors.reduce((acc: Record<string, User>, author: User | null) => {
-                        if (author) acc[author.uid] = author;
-                        return acc;
-                    }, {} as Record<string, User>)
-                    : {};
-                setCommentAuthors(authorsMap);
-            });
-        }
-    }, [fetchBlog, initialBlog, blog, commentAuthors]);
+    // useEffect(() => {
+    //     if (!initialBlog) {
+    //         fetchBlog();
+    //     } else if (blog && blog.comments.length > 0 && Object.keys(commentAuthors).length === 0) {
+    //         // Fetch comment authors for initial blog
+    //         const commentAuthorIds = [...new Set(blog.comments.map(comment => comment.authorId))];
+    //         getUsersByIds(commentAuthorIds).then(authors => {
+    //             const authorsMap = Array.isArray(authors)
+    //                 ? authors.reduce((acc: Record<string, User>, author: User | null) => {
+    //                     if (author) acc[author.uid] = author;
+    //                     return acc;
+    //                 }, {} as Record<string, User>)
+    //                 : {};
+    //             setCommentAuthors(authorsMap);
+    //         });
+    //     }
+    // }, [fetchBlog, initialBlog, blog, commentAuthors]);
 
-    const handleLike = async () => {
+    const handleLike = async (e: React.MouseEvent) => {
+        e.preventDefault();
         if (!user || !blog || isLiking) return;
 
         setIsLiking(true);
@@ -172,6 +179,7 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
 
     return (
         <div className="min-h-screen bg-background text-foreground">
+            
             <div className="max-w-4xl mx-auto px-4 py-8">
                 {/* Back button */}
                 <Button
@@ -182,104 +190,104 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back
                 </Button>
-
+                {/* Author and meta info */}
+                <div className="flex items-center gap-4 mb-6">
+                    {authorData?.photoURL ? (
+                        <Image
+                            src={authorData.photoURL}
+                            alt={authorData.displayName || authorData.username}
+                            width={64}
+                            height={64}
+                            // className="rounded-full object-cover ring-1 ring-blue-100"
+                            className="h-8 w-8 rounded-full object-cover border-2 border-border"
+                        />
+                    ) : (
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                            <UserIcon className="h-6 w-6 text-white" />
+                        </div>
+                    )}
+                    <div>
+                        <Link
+                            href={`/user/${blog.authorUsername}`}
+                            className="font-semibold text-foreground hover:text-blue-600 transition-colors"
+                        >
+                            {authorData?.displayName || blog.authorUsername}
+                        </Link>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                            <Calendar className="h-4 w-4" />
+                            <time dateTime={blog.createdAt.toISOString()}>
+                                {formatDistanceToNow(blog.createdAt, { addSuffix: true })}
+                            </time>
+                        </div>
+                    </div>
+                </div>
                 {/* Blog content */}
-                <article className="bg-white rounded-xl shadow-lg overflow-hidden">
+                <article className=" rounded-xl shadow-lg overflow-hidden">
                     {/* Header */}
                     <header className="p-8 border-b border-gray-100">
-                        <h1 className="text-4xl font-bold text-gray-900 mb-6 leading-tight">
+                        <h1 className="text-4xl font-bold  mb-6 leading-tight  text-foreground" >
                             {blog.title}
                         </h1>
-
-                        {/* Author and meta info */}
-                        <div className="flex items-center gap-4 mb-6">
-                            {authorData?.photoURL ? (
-                                <Image
-                                    src={authorData.photoURL}
-                                    alt={authorData.displayName || authorData.username}
-                                    width={48}
-                                    height={48}
-                                    className="rounded-full object-cover ring-2 ring-blue-100"
-                                />
-                            ) : (
-                                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                    <UserIcon className="h-6 w-6 text-white" />
-                                </div>
-                            )}
-                            <div>
-                                <Link
-                                    href={`/user/${blog.authorUsername}`}
-                                    className="font-semibold text-gray-900 hover:text-blue-600 transition-colors"
-                                >
-                                    {authorData?.displayName || blog.authorUsername}
-                                </Link>
-                                <div className="flex items-center gap-2 text-sm text-gray-500">
-                                    <Calendar className="h-4 w-4" />
-                                    <time dateTime={blog.createdAt.toISOString()}>
-                                        {formatDistanceToNow(blog.createdAt, { addSuffix: true })}
-                                    </time>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Action buttons */}
-                        <div className="flex items-center gap-4">
-                            <Button
-                                onClick={handleLike}
-                                disabled={!user || isLiking}
-                                variant="ghost"
-                                size="sm"
-                                className={`flex items-center gap-2 ${isLiked
-                                    ? 'text-red-600 bg-red-50 hover:bg-red-100'
-                                    : 'text-gray-600 hover:bg-gray-100'
-                                    }`}
-                            >
-                                <Heart
-                                    className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`}
-                                />
-                                {blog.likes.length}
-                            </Button>
-
-                            <Button
-                                onClick={handleBookmark}
-                                disabled={!user || isBookmarking}
-                                variant="ghost"
-                                size="sm"
-                                className={`flex items-center gap-2 ${isBookmarked
-                                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
-                                    : 'text-gray-600 hover:bg-gray-100'
-                                    }`}
-                            >
-                                <Bookmark
-                                    className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`}
-                                />
-                                {isBookmarked ? 'Bookmarked' : 'Bookmark'}
-                            </Button>
-
-                            <Button
-                                onClick={() => setShowComments(!showComments)}
-                                variant="ghost"
-                                size="sm"
-                                className="flex items-center gap-2 text-gray-600 hover:bg-gray-100"
-                            >
-                                <MessageCircle className="h-4 w-4" />
-                                {blog.comments.length} Comments
-                            </Button>
-                        </div>
                     </header>
-
                     {/* Blog content */}
                     <div className="p-8">
                         <div
-                            className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-strong:text-gray-900"
+                            className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-strong:text-gray-900 text-foreground"
                             dangerouslySetInnerHTML={{ __html: blog.content.replace(/\n/g, '<br />') }}
                         />
                     </div>
                 </article>
+                {/* Action buttons */}
+                <div className="flex items-center gap-4">
+                    <Button
+                        onClick={handleLike}
+                        disabled={!user || isLiking}
+                        variant="ghost"
+                        size="sm"
+                        className={`flex items-center gap-2 ${isLiked
+                            ? 'text-red-600 bg-red-50 hover:bg-red-100'
+                            : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                    >
+                        <Heart
+                            className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`}
+                        />
+                        {blog.likes.length}
+                    </Button>
+
+                    <Button
+                        onClick={handleBookmark}
+                        disabled={!user || isBookmarking}
+                        variant="ghost"
+                        size="sm"
+                        className={`flex items-center gap-2 ${isBookmarked
+                            ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                            : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                    >
+                        <Bookmark
+                            className={`h-4 w-4 ${isBookmarked ? 'fill-current' : ''}`}
+                        />
+                        {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+                    </Button>
+
+                    <Button
+                        onClick={() => setShowComments(!showComments)}
+                        variant="ghost"
+                        size="sm"
+                        className={`flex items-center gap-2 text-gray-600 ${showComments
+                            ? 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+                            : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                    >
+                        <MessageCircle className="h-4 w-4" />
+                        {blog.comments.length} Comments
+                    </Button>
+                </div>
 
                 {/* Comments section */}
                 {showComments && (
-                    <section className="mt-8 bg-white rounded-xl shadow-lg p-8">
+                    <section className="mt-8 rounded-xl shadow-lg p-8">
                         <h2 className="text-2xl font-bold text-gray-900 mb-6">
                             Comments ({blog.comments.length})
                         </h2>
@@ -292,9 +300,10 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
                                         <Image
                                             src={user.photoURL}
                                             alt={user.displayName || user.username}
-                                            width={40}
-                                            height={40}
-                                            className="rounded-full object-cover ring-2 ring-blue-100"
+                                            width={128}
+                                            height={128}
+                                            // className="rounded-full object-cover ring-2 ring-blue-100"
+                                            className="h-8 w-8 rounded-full object-cover border-2 border-border"
                                         />
                                     ) : (
                                         <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
@@ -343,19 +352,23 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
                                 </p>
                             ) : (
                                 blog.comments.map((comment) => {
-                                    const commentAuthor = commentAuthors[comment.authorId];
+                                    // console.log("testing comment",comment);
+                                    // console.log("testing commentAuthors",commentAuthors);
+                                    // const commentAuthor = commentAuthors[comment.authorId];
+                                    // console.log("testing commentAuthor",commentAuthor);
                                     return (
-                                        <div key={comment.id} className="flex gap-4 p-4 bg-gray-50 rounded-lg">
-                                            {commentAuthor?.photoURL ? (
+                                        <div key={comment.id} className="flex gap-4 p-4  rounded-lg">
+                                            {comment.photoURL? (
                                                 <Image
-                                                    src={commentAuthor.photoURL}
-                                                    alt={commentAuthor.displayName || commentAuthor.username}
+                                                    src={comment.photoURL || "https://res.cloudinary.com/dgb2nv167/image/upload/v1752597505/n4umzarqhgfi60i9rl4z.jpg"}
+                                                    alt={comment.authorUsername}
                                                     width={40}
                                                     height={40}
-                                                    className="rounded-full object-cover ring-2 ring-gray-200"
+                                                    // className="rounded-full object-cover ring-2 ring-gray-200"
+                                                    className='h-10 w-10 rounded-full object-cover border-2 border-border'
                                                 />
                                             ) : (
-                                                <div className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center">
+                                                <div className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center ">
                                                     <UserIcon className="h-5 w-5 text-white" />
                                                 </div>
                                             )}
@@ -363,15 +376,15 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <Link
                                                         href={`/user/${comment.authorUsername}`}
-                                                        className="font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+                                                        className="font-semibold text-foreground hover:text-blue-600 transition-colors"
                                                     >
-                                                        {commentAuthor?.displayName || comment.authorUsername}
+                                                        {comment.authorUsername}
                                                     </Link>
                                                     <span className="text-sm text-gray-500">
                                                         {formatDistanceToNow(comment.createdAt, { addSuffix: true })}
                                                     </span>
                                                 </div>
-                                                <p className="text-gray-700 leading-relaxed">
+                                                <p className="text-foreground leading-relaxed">
                                                     {comment.content}
                                                 </p>
                                             </div>

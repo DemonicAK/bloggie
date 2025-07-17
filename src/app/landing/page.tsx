@@ -9,7 +9,10 @@ import {
     Cloud,
     Cpu,
     GitBranch,
-    Zap
+    Zap,
+    Users,
+    BookOpen,
+    Rocket
 } from 'lucide-react';
 import AuthModal from '@/components/AuthModal';
 import { Button } from '@/components/ui/button';
@@ -53,7 +56,7 @@ export default function LandingPage() {
                             </Button>
                         </div>
                         <div className="mt-8 text-sm text-muted-foreground">
-                            🚀 Join 10,000+ developers sharing knowledge
+                            🚀 Join 5+ developers sharing knowledge
                         </div>
                     </div>
                 </div>
@@ -81,7 +84,7 @@ export default function LandingPage() {
                             </div>
                             <h3 className="text-xl font-semibold mb-3">Syntax Highlighting</h3>
                             <p className="text-muted-foreground leading-relaxed">
-                                Beautiful code blocks with support for 100+ programming languages.
+                                Beautiful code blocks with support for 1+ programming languages.
                                 Make your tutorials crystal clear.
                             </p>
                         </div>
@@ -154,7 +157,7 @@ export default function LandingPage() {
                         Ready to Share Your Tech Knowledge?
                     </h2>
                     <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-                        Whether you&apos;re sharing a quick tip or writing an in-depth tutorial,
+                        Whether you're sharing a quick tip or writing an in-depth tutorial,
                         join thousands of developers building the future through knowledge sharing.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">

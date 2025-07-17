@@ -21,6 +21,13 @@
   --ring: #3b82f6;
   --font-geist-sans: 'Geist Sans', system-ui, sans-serif;
   --font-geist-mono: 'Geist Mono', monospace;
+    --foreground: #ffffff;
+    --card-foreground: #ffffff;
+    --primary-foreground: #ffffff;
+    --secondary-foreground: #ffffff;
+    --muted-foreground: #d4cbbc;
+    --accent-foreground: #ffffff;
+    --destructive-foreground: #ffffff;
 }
 
 .light {
