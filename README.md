@@ -2,7 +2,7 @@
 
 A modern, fast blogging platform built with Next.js, TypeScript, and Firebase.
 
-[![Live Demo](https://img.shields.io/badge/🌍_Live_Demo-bloggie.arijitkar.com-brightgreen)](https://bloggie.arijitkar.com)
+[![Live Demo](https://img.shields.io/badge/🌍_Live_Demo-techblog.arijitkar.com-brightgreen)](https://techblog.arijitkar.com)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ## About
@@ -38,8 +38,8 @@ Bloggie is a clean, performant blogging platform designed for technical writers 
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/DemonicAK/bloggie.git
-   cd bloggie
+   git clone https://github.com/DemonicAK/techblog.git
+   cd techblog
    ```
 
 2. **Install dependencies**
