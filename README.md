@@ -7,7 +7,7 @@ A modern, fast blogging platform built with Next.js, TypeScript, and Firebase.
 
 ## About
 
-Bloggie is a clean, performant blogging platform designed for technical writers and developers. Built with modern web technologies, it offers a seamless writing and reading experience with real-time features and excellent performance.
+Techblog is a clean, performant blogging platform designed for technical writers and developers. Built with modern web technologies, it offers a seamless writing and reading experience with real-time features and excellent performance.
 
 ### Key Features
 
@@ -153,7 +153,7 @@ We welcome contributions! Here's how to get started:
 
 ### Issue Reporting
 
-Found a bug or have a feature request? Please [open an issue](https://github.com/DemonicAK/bloggie/issues) with:
+Found a bug or have a feature request? Please [open an issue](https://github.com/DemonicAK/techblog/issues) with:
 - Clear description of the problem/feature
 - Steps to reproduce (for bugs)
 - Expected vs actual behavior
