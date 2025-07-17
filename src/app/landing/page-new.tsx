@@ -9,7 +9,10 @@ import {
     Cloud,
     Cpu,
     GitBranch,
-    Zap
+    Zap,
+    Users,
+    BookOpen,
+    Rocket
 } from 'lucide-react';
 import AuthModal from '@/components/AuthModal';
 import { Button } from '@/components/ui/button';
@@ -154,7 +157,7 @@ export default function LandingPage() {
                         Ready to Share Your Tech Knowledge?
                     </h2>
                     <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-                        Whether you&apos;re sharing a quick tip or writing an in-depth tutorial,
+                        Whether you're sharing a quick tip or writing an in-depth tutorial,
                         join thousands of developers building the future through knowledge sharing.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">

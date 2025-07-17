@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { generateHomeMetadata, generateWebsiteJsonLd, performanceConfig } from "@/lib/seo";
@@ -46,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth dark">
       <head>
         {/* Performance optimization resources */}
         {performanceConfig.dns.map((dns, index) => (
@@ -106,16 +107,18 @@ export default function RootLayout({
         )}
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 flex flex-col min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
-        <AuthProvider>
-          <Navbar />
-          <main className="flex-1" role="main">
-            {children}
-          </main>
-          <Footer />
-          <Analytics mode="production" />;
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <Navbar />
+            <main className="flex-1" role="main">
+              {children}
+            </main>
+            <Footer />
+            <Analytics mode="production" />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

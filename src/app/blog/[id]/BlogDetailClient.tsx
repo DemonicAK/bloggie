@@ -143,10 +143,10 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+            <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
                 <div className="text-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-                    <p className="text-gray-600">Loading amazing content...</p>
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+                    <p className="text-muted-foreground">Loading amazing content...</p>
                 </div>
             </div>
         );
@@ -154,10 +154,10 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
 
     if (!blog) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+            <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
                 <div className="text-center">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-4">Blog not found</h1>
-                    <p className="text-gray-600 mb-6">The blog you&apos;re looking for doesn&apos;t exist or has been removed.</p>
+                    <h1 className="text-2xl font-bold text-foreground mb-4">Blog not found</h1>
+                    <p className="text-muted-foreground mb-6">The blog you&apos;re looking for doesn&apos;t exist or has been removed.</p>
                     <Button onClick={() => router.push('/home')} className="bg-blue-600 hover:bg-blue-700">
                         <ArrowLeft className="h-4 w-4 mr-2" />
                         Back to Home
@@ -171,13 +171,13 @@ export default function BlogDetailClient({ blogId, initialBlog, initialAuthor }:
     const isBookmarked = user && blog.bookmarks.includes(user.uid);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="min-h-screen bg-background text-foreground">
             <div className="max-w-4xl mx-auto px-4 py-8">
                 {/* Back button */}
                 <Button
                     onClick={() => router.back()}
                     variant="ghost"
-                    className="mb-6 text-blue-600 hover:bg-blue-50"
+                    className="mb-6 text-primary hover:bg-accent"
                 >
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back

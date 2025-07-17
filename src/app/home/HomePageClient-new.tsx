@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import BlogCard from '@/components/BlogCard';
 import { getBlogs, getMostLikedBlogs } from '@/lib/blogService';
 import { Blog } from '@/types';
-import { TrendingUp, Clock, Loader2, Heart, BookOpen } from 'lucide-react';
+import { TrendingUp, Clock, Loader2, BookOpen, Terminal } from 'lucide-react';
 
 export default function HomePageClient() {
     const [latestBlogs, setLatestBlogs] = useState<Blog[]>([]);
@@ -64,82 +64,72 @@ export default function HomePageClient() {
     const displayedBlogs = activeTab === 'latest' ? latestBlogs : mostLikedBlogs;
 
     return (
-        <div className="min-h-screen bg-background text-foreground">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Tabs */}
+        <div className="min-h-screen bg-background">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Hero Section */}
+                <div className="text-center mb-12">
+                    <div className="inline-flex items-center justify-center mb-6">
+                        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-2xl shadow-lg">
+                            <Terminal className="h-10 w-10 text-white" />
+                        </div>
+                    </div>
+                    <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                        Welcome to TechBlog
+                    </h1>
+                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+                        Discover the latest programming tutorials, software engineering insights, and tech innovations from our community of developers.
+                    </p>
+                </div>
+
+                {/* Tab Navigation */}
                 <div className="flex justify-center mb-8">
                     <div className="bg-card rounded-xl p-1 shadow-lg border border-border">
-                        <div className="flex space-x-1">
-                            <button
-                                onClick={() => setActiveTab('latest')}
-                                className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === 'latest'
+                        <button
+                            onClick={() => setActiveTab('latest')}
+                            className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === 'latest'
                                     ? 'bg-primary text-primary-foreground shadow-md'
                                     : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                                    }`}
-                            >
-                                <Clock className="h-4 w-4 mr-2" />
-                                Fresh Stories
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('popular')}
-                                className={`flex items-center px-6 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === 'popular'
+                                }`}
+                        >
+                            <Clock className="h-4 w-4" />
+                            <span>Latest Posts</span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('popular')}
+                            className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${activeTab === 'popular'
                                     ? 'bg-primary text-primary-foreground shadow-md'
                                     : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-                                    }`}
-                            >
-                                <TrendingUp className="h-4 w-4 mr-2" />
-                                Reader Favorites
-                            </button>
-                        </div>
+                                }`}
+                        >
+                            <TrendingUp className="h-4 w-4" />
+                            <span>Most Popular</span>
+                        </button>
                     </div>
                 </div>
 
-                {/* Blog Grid */}
+                {/* Loading State */}
                 {loading ? (
-                    <div className="text-center py-12">
-                        <div className="bg-card rounded-2xl p-8 shadow-lg border border-border">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-                            <p className="text-muted-foreground">Finding great stories for you...</p>
-                            <div className="mt-2 text-sm text-muted-foreground">
-                                ✨ Quality takes a moment
-                            </div>
+                    <div className="text-center py-20">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full blur-sm opacity-30 animate-pulse"></div>
+                            <Loader2 className="relative h-8 w-8 animate-spin text-primary mx-auto" />
                         </div>
+                        <p className="mt-4 text-muted-foreground text-lg">
+                            Loading amazing tech content...
+                        </p>
                     </div>
                 ) : (
                     <>
-                        {displayedBlogs.length === 0 ? (
-                            <div className="bg-card rounded-2xl p-12 text-center shadow-lg border border-border">
-                                <div className="bg-accent p-4 rounded-xl inline-block mb-4">
-                                    <BookOpen className="h-12 w-12 text-primary" />
-                                </div>
-                                <h3 className="text-xl font-semibold text-card-foreground mb-3">No stories yet in this section</h3>
-                                <p className="text-muted-foreground mb-4">
-                                    {activeTab === 'latest'
-                                        ? "Be the first to share your story with our community!"
-                                        : "Stories need time to gain popularity. Check back soon!"}
-                                </p>
-                                <div className="text-sm text-gray-400">
-                                    📝 Every great story starts with a single word
-                                </div>
-                            </div>
-                        ) : (
+                        {/* Blog Grid */}
+                        {displayedBlogs.length > 0 ? (
                             <>
-                                {/* Story count and encouragement */}
-                                <div className="text-center mb-6">
-                                    <div className="inline-flex items-center bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-medium">
-                                        <Heart className="h-4 w-4 mr-1" fill="currentColor" />
-                                        {displayedBlogs.length} {activeTab === 'latest' ? 'fresh' : 'beloved'} stories waiting for you
-                                    </div>
-                                </div>
-
-                                <div className="grid gap-6 mb-8">
+                                <div className="grid gap-6 md:gap-8">
                                     {displayedBlogs.map((blog, index) => (
                                         <div
                                             key={blog.id}
-                                            className="bg-card rounded-xl shadow-lg border border-border hover:shadow-xl transition-all duration-300 overflow-hidden"
+                                            className="bg-card rounded-2xl shadow-lg border border-border hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                                             style={{
-                                                animationDelay: `${index * 0.1}s`,
-                                                animation: 'fadeInUp 0.6s ease-out forwards'
+                                                animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`
                                             }}
                                         >
                                             <BlogCard
@@ -150,6 +140,18 @@ export default function HomePageClient() {
                                     ))}
                                 </div>
                             </>
+                        ) : (
+                            <div className="text-center py-20">
+                                <div className="mb-6">
+                                    <BookOpen className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                                    <h3 className="text-xl font-semibold text-foreground mb-2">
+                                        No articles found
+                                    </h3>
+                                    <p className="text-muted-foreground">
+                                        Be the first to share your technical knowledge with the community!
+                                    </p>
+                                </div>
+                            </div>
                         )}
 
                         {/* Load More Button */}
@@ -158,19 +160,19 @@ export default function HomePageClient() {
                                 <button
                                     onClick={loadMoreBlogs}
                                     disabled={loadingMore}
-                                    className="px-8 py-4 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {loadingMore ? (
                                         <>
                                             <Loader2 className="h-4 w-4 animate-spin mr-2 inline" />
-                                            Finding more stories...
+                                            Loading more articles...
                                         </>
                                     ) : (
-                                        'More Stories Please ✨'
+                                        'Load More Articles 🚀'
                                     )}
                                 </button>
                                 <div className="mt-3 text-sm text-muted-foreground">
-                                    There&apos;s always another great story to discover
+                                    Discover more technical insights and tutorials
                                 </div>
                             </div>
                         )}

@@ -86,7 +86,11 @@ export default function Loading() {
                                             key={index}
                                             className="absolute w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full shadow-lg"
                                             style={{
-                                                animation: `zigzagMove 2s ease-in-out infinite, pulseGlow 1s ease-in-out infinite alternate`,
+                                                animationName: 'zigzagMove, pulseGlow',
+                                                animationDuration: '2s, 1s',
+                                                animationTimingFunction: 'ease-in-out, ease-in-out',
+                                                animationIterationCount: 'infinite, infinite',
+                                                animationDirection: 'normal, alternate',
                                                 animationDelay: `${index * 0.2}s`,
                                                 filter: 'brightness(1.2)',
                                             }}

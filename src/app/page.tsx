@@ -23,10 +23,10 @@ export default function RootPage() {
 
   // Show loading spinner while determining redirect
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+    <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
       <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full blur-sm opacity-30 animate-pulse"></div>
-        <Loader2 className="relative h-8 w-8 animate-spin text-blue-600" />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80 rounded-full blur-sm opacity-30 animate-pulse"></div>
+        <Loader2 className="relative h-8 w-8 animate-spin text-primary" />
       </div>
     </div>
   );
