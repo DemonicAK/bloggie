@@ -1,4 +1,4 @@
-# Bloggie
+# TechBlog
 
 A modern, fast blogging platform built with Next.js, TypeScript, and Firebase.
 
