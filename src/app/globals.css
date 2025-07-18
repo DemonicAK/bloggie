@@ -27,7 +27,8 @@
     --secondary-foreground: #ffffff;
     --muted-foreground: #d4cbbc;
     --accent-foreground: #ffffff;
-    --destructive-foreground: #ffffff;
+    --destructive-foreground: #c5bfbf00;
+    --another:#00000000;
 }
 
 .light {
@@ -88,13 +89,13 @@ body {
   animation-delay: 4s;
 }
 
-/* Glass morphism effects */
+ /* Glass morphism effects */
 .glass {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-}
+} 
 
 /* Smooth scrolling */
 html {

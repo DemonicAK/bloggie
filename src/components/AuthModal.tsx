@@ -368,12 +368,18 @@ const AuthModal: React.FC<AuthModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-white border border-gray-200 shadow-2xl">
+      <DialogContent className="sm:max-w-md bg-secondary dark:bg-[#1a1a1a]  border border-gray-200 shadow-2xl" 
+        style={{
+          backgroundColor: 'var(--card)',
+          color: 'var(--card-foreground)',
+        }}
+      >
+        <div className="max-h-[80vh] overflow-y-auto px-1">
         <DialogHeader className="text-center space-y-2">
           <div className="mx-auto w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-2">
             <span className="text-2xl">👋</span>
           </div>
-          <DialogTitle className="text-2xl font-bold text-gray-800">
+          <DialogTitle className="text-2xl font-bold text-green-500">
             {isLoginMode ? 'Welcome Back!' : 'Join Our Community'}
           </DialogTitle>
           <p className="text-gray-600 text-sm">
@@ -565,7 +571,7 @@ const AuthModal: React.FC<AuthModalProps> = ({
             </p>
           </div>
         </form>
-
+</div>
       </DialogContent>
     </Dialog>
   );
